@@ -27,11 +27,11 @@ class billboard:
         stats = avg_pos.join(minweek).join(maxweek).join(max_occ)
         self.data = self.features.join(stats, on='SongID').rename(columns={'Week Position':'Avg Weekly'})
 
-    def getList(self, how='avg', length=50, lowerY=2019, lowerM=1, lowerD=1, upperY=2019, upperM=12, upperD=31):
-        # songs should have entered chart before upper bound (e.g. 2019 songs should have been on chart before 2019/12/31)
-        lowerBound = datetime.datetime(lowerY, lowerM, lowerD)
+    def getList(self, how='avg', length=50, startY=2019, startM=1, startD=1, endY=2019, endM=12, endD=31):
         # songs should have left chart after lower bound (e.g. 2019 songs should still be on chart after 2019/1/1)
-        upperBound = datetime.datetime(upperY, upperM, upperD)
+        lowerBound = datetime.datetime(startY, startM, startD)
+        # songs should have entered chart before upper bound (e.g. 2019 songs should have been on chart before 2019/12/31)
+        upperBound = datetime.datetime(endY, endM, endD)
 
         #if how == ''  ; implement later for other possible ranking methods
         self.weeklyAvg()
