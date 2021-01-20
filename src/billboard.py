@@ -4,11 +4,13 @@ import datetime
 
 class billboard:
     def __init__(self):
-        features = pd.read_csv('Hot 100 Audio Features.csv')
+        #features = pd.read_csv('Hot 100 Audio Features.csv')
+        features = pd.read_excel('https://query.data.world/s/2hymngpmogoje5bwt3ikufdxjdgkn3')
         # only include tracks that have a spotify id on file for now
         self.features = features[~features['spotify_track_id'].isnull()][features.columns[0:5]].drop_duplicates()
 
-        stuff = pd.read_csv('Hot Stuff.csv')
+        #stuff = pd.read_csv('Hot Stuff.csv')
+        stuff = pd.read_csv('https://query.data.world/s/go22golrhaeqllglpuxnnd7irb3l2j')
         stuff['WeekID'] = pd.to_datetime(stuff['WeekID'])
         self.stuff = stuff
 
