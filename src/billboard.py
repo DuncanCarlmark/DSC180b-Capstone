@@ -44,4 +44,5 @@ class billboard:
         filter_g = filter_t[filter_t.spotify_genre.apply(lambda x: bool(set(x) & set(genre)))]
         
         playlist = filter_g.sort_values(['Instance','Avg Weekly','Weeks on Chart'], ascending=[True,True,False]).reset_index(drop=True)
-        return playlist[playlist.columns[0:5]][:length]
+        #  return playlist[playlist.columns[0:5]][:length] # for test
+        return playlist['spotify_track_id'][:length]
