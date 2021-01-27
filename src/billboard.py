@@ -43,11 +43,7 @@ class billboard:
         filter_t = data[(data['firstWeekID'] < upperBound) & (data['lastWeekID'] > lowerBound)]
         filter_g = filter_t[filter_t.spotify_genre.apply(lambda x: bool(set(x) & set(genre)))]
         
-        playlist = filter_g.sort_values(['Instance','Avg Weekly','Weeks on Chart'],
-                                        ascending[True,True,False]).reset_index(drop=True)
+        playlist = filter_g.sort_values(['Instance','Avg Weekly','Weeks on Chart'], 
+                                        ascending=[True,True,False]).reset_index(drop=True)
         #return playlist[playlist.columns[0:5]][:length] # for test
         return playlist['spotify_track_id'][:length].to_list()
-
-x = billboard()
-billboard_rec = x.getList(genre=['electronica','pop'])
-billboard_rec

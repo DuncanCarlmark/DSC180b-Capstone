@@ -1,2 +1,5 @@
 data/*
 .DS_Store
+src/__pycache__
+.cache-*
+*-checkpoint.ipynb

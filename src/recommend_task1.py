@@ -26,11 +26,11 @@ except:
     token = spotipy.util.prompt_for_user_token(username=username)
     
 spotify = spotipy.Spotify(auth=token)
-playlist = spotify.user_playlist_create(username, name='capstone', public=True, collaborative=False, description='')
 
 x = billboard()
 billboard_rec = x.getList(startY=2010, endY=2020, genre=['electronica'])
 
+playlist = spotify.user_playlist_create(username, name='capstone', public=True, collaborative=False, description='')
 spotify.user_playlist_add_tracks(user=username, 
                                  playlist_id=playlist['id'], 
                                  tracks=billboard_rec, 
