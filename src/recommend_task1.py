@@ -32,6 +32,6 @@ billboard_rec = x.getList(startY=2010, endY=2020, genre=['electronica'])
 
 playlist = spotify.user_playlist_create(username, name='capstone', public=True, collaborative=False, description='')
 spotify.user_playlist_add_tracks(user=username, 
-                                 playlist_id=playlist['id'], 
+                                 playlist_id=str(playlist['id']), # can't get this specific line to work for some reason f
                                  tracks=billboard_rec, 
                                  position=None)
