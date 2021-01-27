@@ -30,11 +30,11 @@ class billboard:
         stats = avg_pos.join(minweek).join(maxweek).join(max_occ)
         self.data = self.features.join(stats, on='SongID').rename(columns={'Week Position':'Avg Weekly'})
 
-    def getList(self, how='avg', length=30, genre=['pop','dance pop'], startY=2019, startM=1, startD=1, endY=2019, endM=12, endD=31):
+    def getList(self, how='avg', length=30, genre=['pop','dance pop'], startY=2019, endY=2019):
         # songs should have left chart after lower bound (e.g. 2019 songs should still be on chart after 2019/1/1)
-        lowerBound = datetime.datetime(startY, startM, startD)
+        lowerBound = datetime.datetime(startY, 1, 1)
         # songs should have entered chart before upper bound (e.g. 2019 songs should have been on chart before 2019/12/31)
-        upperBound = datetime.datetime(endY, endM, endD)
+        upperBound = datetime.datetime(endY, 12, 31)
 
         #if how == ''  ; implement later for other possible ranking methods
         self.weeklyAvg()
@@ -43,6 +43,11 @@ class billboard:
         filter_t = data[(data['firstWeekID'] < upperBound) & (data['lastWeekID'] > lowerBound)]
         filter_g = filter_t[filter_t.spotify_genre.apply(lambda x: bool(set(x) & set(genre)))]
         
-        playlist = filter_g.sort_values(['Instance','Avg Weekly','Weeks on Chart'], ascending=[True,True,False]).reset_index(drop=True)
-        #  return playlist[playlist.columns[0:5]][:length] # for test
-        return playlist['spotify_track_id'][:length]
+        playlist = filter_g.sort_values(['Instance','Avg Weekly','Weeks on Chart'],
+                                        ascending[True,True,False]).reset_index(drop=True)
+        #return playlist[playlist.columns[0:5]][:length] # for test
+        return playlist['spotify_track_id'][:length].to_list()
+
+x = billboard()
+billboard_rec = x.getList(genre=['electronica','pop'])
+billboard_rec

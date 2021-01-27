@@ -1,4 +1,5 @@
 from billboard import billboard
+import os
 import spotipy
 from spotipy.oauth2 import SpotifyOAuth
 from spotipy.oauth2 import SpotifyClientCredentials
@@ -25,14 +26,12 @@ except:
     token = spotipy.util.prompt_for_user_token(username=username)
     
 spotify = spotipy.Spotify(auth=token)
-
-spotify.user_playlist_create(username, name='capstone', public=True, collaborative=False, description='')
+playlist = spotify.user_playlist_create(username, name='capstone', public=True, collaborative=False, description='')
 
 x = billboard()
-billboard_rec = x.getList(startY=1970, endY=2000, genre=['rap','trap'])
+billboard_rec = x.getList(startY=2010, endY=2020, genre=['electronica'])
 
 spotify.user_playlist_add_tracks(user=username, 
-                                 playlist_id='2Du1pfrH3KXkXX197syWxs', 
+                                 playlist_id=playlist['id'], 
                                  tracks=billboard_rec, 
                                  position=None)
-
