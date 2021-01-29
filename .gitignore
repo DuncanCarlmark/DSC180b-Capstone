@@ -1,1 +1,9 @@
 data/*
+.DS_Store
+.cache*
+*-checkpoint.ipynb
+notebooks/.cache*
+notebooks/*-checkpoint.ipynb
+src/__pycache__
+
+
