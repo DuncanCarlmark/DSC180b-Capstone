@@ -5,10 +5,10 @@ import datetime
 class billboard:
     def __init__(self):
         #features = pd.read_csv('Hot 100 Audio Features.csv')
-        f = pd.read_excel('https://query.data.world/s/2hymngpmogoje5bwt3ikufdxjdgkn3')
+        f = pd.read_excel('https://query.data.world/s/2hymngpmogoje5bwt3ikufdxjdgkn3',usecols=[0,1,2,3,4])
         # only include tracks that have a spotify id on file for now
         #f = f[~f['spotify_track_id'].isnull()][f.columns[0:5]].drop_duplicates()
-        f = f.dropna(subset=['spotify_track_id', 'spotify_genre'])[f.columns[0:5]].drop_duplicates()
+        f = f.dropna(subset=['spotify_track_id', 'spotify_genre']).drop_duplicates()
         f['spotify_genre'] = [x.strip('[]').strip('\'').split('\', \'') for x in f['spotify_genre']]
         self.features = f
 
