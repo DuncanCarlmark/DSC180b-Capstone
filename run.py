@@ -5,8 +5,7 @@ import math
 import boto3
 from collections import defaultdict
 
-os.environ["AWS_ACCESS_KEY_ID"] = "AKIAIIVZBLJTALI6RFJQ"
-os.environ["AWS_SECRET_ACCESS_KEY"] = "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"
+
 
 
 
