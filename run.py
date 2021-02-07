@@ -2,7 +2,7 @@ import sys
 import json
 import os
 import math
-import boto3
+import requests
 from collections import defaultdict
 
 
@@ -17,6 +17,9 @@ DATA_DIR_CLEAN = os.path.join(DATA_DIR, 'clean')
 USER_PROFILE = os.path.join(DATA_DIR_RAW, 'usersha1-profile.tsv')
 USER_ARTIST = os.path.join(DATA_DIR_RAW, 'usersha1-artmbid-artname-plays.tsv')
 
+BILLBOARD_SONGS = os.path.join(DATA_DIR_RAW, 'billboard_songs.csv')
+BILLBOARD_FEATURES = os.path.join(DATA_DIR_RAW, 'billboard_info.xlsx')
+
 
 
 def main(targets):
@@ -24,14 +27,15 @@ def main(targets):
 
     if 'test' in targets:
         pass
+    
         
 
     if 'load-data' in targets:
+
         # Make data directory and subfolders for billboard and last.fm
         print("------------------------- DOWNLOADING RAW TRAINING DATA -------------------------")
 
         # Make necessary directories if they do not already exist
-
         print("CREATING DATA DIRECTORIES")
         if os.path.isdir(DATA_DIR):
             print("Data directory already exists. Skipping creation.")
@@ -43,25 +47,25 @@ def main(targets):
 
 
         # Load data if necessary
-
         print("DOWNLOADING TRAINING DATA")
         if os.path.isfile(USER_PROFILE) and os.path.isfile(USER_ARTIST):
             print("Data files already exist. Skipping download.")
 
         else:
-            s3 = boto3.resource('s3')
-            s3.Bucket('capstone-raw-data').download_file('usersha1-profile.tsv', USER_PROFILE)
-            s3.Bucket('capstone-raw-data').download_file('usersha1-artmbid-artname-plays.tsv', USER_ARTIST)
+            # LAST.FM files
+            r = requests.get('https://capstone-raw-data.s3-us-west-2.amazonaws.com/usersha1-profile.tsv')
+            open(USER_PROFILE, 'wb').write(r.content)
 
-            print("All data files downloaded")
-        
-        
-
+            r = requests.get('https://capstone-raw-data.s3-us-west-2.amazonaws.com/usersha1-artmbid-artname-plays.tsv')
+            open(USER_ARTIST, 'wb').write(r.content)
+            print('Data files downloaded.')
             
+            # Billboard files
+            r = requests.get('https://capstone-raw-data.s3-us-west-2.amazonaws.com/billboard-songs.csv')
+            open(BILLBOARD_SONGS, 'wb').write(r.content)
 
-        
-
-        
+            r = requests.get('https://capstone-raw-data.s3-us-west-2.amazonaws.com/billboard-features.xlsx')
+            open(BILLBOARD_FEATURES, 'wb').write(r.content)
 
     if 'clean_data' in targets:
         pass
