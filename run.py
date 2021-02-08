@@ -143,7 +143,7 @@ def main(targets):
         cleaned_history = extract_histories(cleaned_history, cleaned_users)
         chosen_history = extract_histories(cleaned_history, chosen_users)
 
-        most_occurrence = pd.DataFrame(chosen_history.groupby('artist_name')['plays'].count().sort_values(ascending=False))
+        #most_occurrence = pd.DataFrame(chosen_history.groupby('artist_name')['plays'].count().sort_values(ascending=False))
 
 
         print("CREATING SPOTIPY OBJECT")
@@ -214,20 +214,20 @@ def main(targets):
         #     row['followers'] = followers
         #     return row
 
-        print("GETTING TOP ARTISTS")
+        #print("GETTING TOP ARTISTS")
         # Getting top artists
-        top_artists = most_occurrence
-        top_artists.reset_index(level=0, inplace=True)
-        top_artists = top_artists[top_artists['plays'] > 10]
-        top_artist_df = top_artists.apply(extract_features, axis=1)
-        selection = ['country']
-        top_artist_df = top_artist_df[top_artist_df.genres.apply(lambda x: bool(set(x) & set(selection)))]
+        #top_artists = most_occurrence
+        #top_artists.reset_index(level=0, inplace=True)
+        #top_artists = top_artists[top_artists['plays'] > 10]
+        #top_artist_df = top_artists.apply(extract_features, axis=1)
+        #selection = ['country']
+        #top_artist_df = top_artist_df[top_artist_df.genres.apply(lambda x: bool(set(x) & set(selection)))]
 
-        print("GETTING TOP TRACKS")
+        #print("GETTING TOP TRACKS")
         # Getting top tracks
-        top_tracks = pd.DataFrame(top_artist_df['top_tracks'].explode().reset_index(drop=True))
-        top_tracks.columns = ['track_name']
-        top_tracks = top_tracks[:100]
+        #top_tracks = pd.DataFrame(top_artist_df['top_tracks'].explode().reset_index(drop=True))
+        #top_tracks.columns = ['track_name']
+        #top_tracks = top_tracks[:100]
 
         # def extract_track_features(row):
         #     uri = sp.search(row)['tracks']['items'][0]['uri']
@@ -245,7 +245,7 @@ def main(targets):
         #     tempo = features['tempo']
         #     return uri, dance, energy, key, loudness, mode, speech, acoustic, instrument, live, valence, tempo
             
-        top_tracks['uri'], top_tracks['danceability'], top_tracks['energy'], top_tracks['key'], top_tracks['loudness'], top_tracks['mode'], top_tracks['speechiness'], top_tracks['acousticness'], top_tracks['instrumentalness'], top_tracks['liveness'], top_tracks['valence'], top_tracks['valence'] = zip(*top_tracks['track_name'].apply(extract_track_features))
+        #top_tracks['uri'], top_tracks['danceability'], top_tracks['energy'], top_tracks['key'], top_tracks['loudness'], top_tracks['mode'], top_tracks['speechiness'], top_tracks['acousticness'], top_tracks['instrumentalness'], top_tracks['liveness'], top_tracks['valence'], top_tracks['valence'] = zip(*top_tracks['track_name'].apply(extract_track_features))
 
         ap = chosen_history
 
@@ -386,7 +386,7 @@ def main(targets):
         user_id = curr_user
 
         print("GENERATING RECOMMMENDATIONS LIST")
-        recommendations = recommend(user_id, sparse_user_artist, user_vecs, artist_vecs)
+        recommendations = recommend(user_id, sparse_user_artist, user_vecs, artist_vecs, updated_df)
 
         updated_df.loc[updated_df['user_id'] == curr_user].sort_values(by=['playCountScaled'], ascending=False)[['artist_name', 'user_id', 'playCountScaled']].head(10)
 
