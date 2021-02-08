@@ -19,32 +19,5 @@ USER root
 RUN	apt-get install htop
 
 # 3) install packages
-RUN pip install --no-cache-dir implicit
-RUN pip install --no-cache-dir Cython  
-RUN pip install --no-cache-dir Keras Keras-Applications Keras-Preprocessing
-RUN pip install --no-cache-dir dm-sonnet
-RUN pip install --no-cache-dir h5py
-RUN pip install --no-cache-dir nose
-RUN pip install --no-cache-dir numpy
-RUN pip install --no-cache-dir pandas
-RUN pip install --no-cache-dir scikit-learn scikit-optimize
-RUN pip install --no-cache-dir scipy
-RUN pip install --no-cache-dir seaborn
-# Tensorflow packages
-RUN pip install --no-cache-dir tensorboard tensorflow tensorflow-estimator tensorflow-probability
-RUN pip install --no-cache-dir tqdm
-RUN pip install --no-cache-dir wrapt
+RUN pip install --no-cache-dir sklearn spotipy implicit
 
-
-
-
-
-
-
-
-# # 4) change back to notebook user
-# COPY /run_jupyter.sh /
-# USER $NB_UID
-
-# Override command to disable running jupyter notebook at launch
-# CMD ["/bin/bash"]
