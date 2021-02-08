@@ -117,7 +117,7 @@ def parse_track_info(response):
     return track_names, album_names, artist_names
 
 # Needs grouped df
-def recommend(user_id, sparse_user_artist, user_vecs, artist_vecs, num_contents=10):
+def recommend(user_id, sparse_user_artist, user_vecs, artist_vecs, grouped_df, num_contents=10):
     user_interactions = sparse_user_artist[user_id,:].toarray()
     user_interactions = user_interactions.reshape(-1) + 1
     user_interactions[user_interactions > 1] = 0
