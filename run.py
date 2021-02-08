@@ -50,9 +50,10 @@ def main(targets):
             USERNAME = run_cfg['username']
             PARENT_AGE = run_cfg['parent_age']
             GENRE = run_cfg['genre']
+            CACHE_PATH = os.path.join('test', '.cache-' + USERNAME)
     else:
         # Parse Config File
-        with open('config/test.json') as fh:
+        with open('config/run.json') as fh:
             run_cfg = json.load(fh)
             USERNAME = run_cfg['username']
             PARENT_AGE = run_cfg['parent_age']
@@ -109,10 +110,11 @@ def main(targets):
         # Create billboard client
         print('Creating list of recommended songs')
         billboard_recommender = billboard()
-        song_recommendations = billboard_recommender.getList(startY=2010, endY=2020, genre=['electronica'])
+        song_recommendations = billboard_recommender.getList(startY=2010, endY=2020, genre=[GENRE])
 
         print('Saving list of recommended songs')
         # Save to csv
+        print(len(song_recommendations))
         pd.DataFrame({'song_recommendations': song_recommendations}).to_csv(os.path.join(DATA_DIR_RECOMMENDATIONS, 'song_recs_t1.csv'))
     
     if 'all' in targets or 'task2' in targets or 'test' in targets:
@@ -159,9 +161,14 @@ def main(targets):
         scope = " ".join(['playlist-modify-public',"user-top-read","user-read-recently-played","playlist-read-private"])
 
         username = USERNAME
-
+        sp_oauth = None
         # Oauth object    
-        sp_oauth = spotipy.oauth2.SpotifyOAuth(client_id, client_secret, redirect_uri, scope=scope, username=username)
+        if 'test' in targets:
+            sp_oauth = spotipy.oauth2.SpotifyOAuth(client_id, client_secret, redirect_uri, 
+                                                    scope=scope, cache_path = CACHE_PATH, username=username)
+        else:
+            sp_oauth = spotipy.oauth2.SpotifyOAuth(client_id, client_secret, redirect_uri, 
+                                                    scope=scope, username=username)
         print("Created Oauth object")
 
         # Force auth every time
