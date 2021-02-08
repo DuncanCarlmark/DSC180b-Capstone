@@ -8,7 +8,7 @@ class billboard:
         f = pd.read_excel('data/raw/billboard_info.xlsx',usecols=[0,1,2,3,4])
         # only include tracks that have a spotify id on file for now
         #f = f[~f['spotify_track_id'].isnull()][f.columns[0:5]].drop_duplicates()
-        f = f.dropna(subset=['spotify_track_id', 'spotify_genre']).drop_duplicates()
+        f = f.dropna(subset=['spotify_track_id', 'spotify_genre']).drop_duplicates(subset='spotify_track_id')
         f['spotify_genre'] = [x.strip('[]').strip('\'').split('\', \'') for x in f['spotify_genre']]
         self.features = f
 
@@ -30,18 +30,20 @@ class billboard:
         stats = avg_pos.join(minweek).join(maxweek).join(max_occ)
         self.data = self.features.join(stats, on='SongID').rename(columns={'Week Position':'Avg Weekly'})
 
-    def getList(self, how='avg', length=30, genre=['pop','dance pop'], startY=2019, endY=2019):
+    def getList(self, how='avg', length=30, genre=[], startY=2019, endY=2019):
         # songs should have left chart after lower bound (e.g. 2019 songs should still be on chart after 2019/1/1)
         lowerBound = datetime.datetime(startY, 1, 1)
         # songs should have entered chart before upper bound (e.g. 2019 songs should have been on chart before 2019/12/31)
         upperBound = datetime.datetime(endY, 12, 31)
 
-        #if how == ''  ; implement later for other possible ranking methods
         self.weeklyAvg()
 
         data = self.data
         filter_t = data[(data['firstWeekID'] < upperBound) & (data['lastWeekID'] > lowerBound)]
-        filter_g = filter_t[filter_t.spotify_genre.apply(lambda x: bool(set(x) & set(genre)))]
+         if (len(genre) == 0):
+            filter_g = filter_t[filter_t.spotify_genre.apply(lambda x: bool(set(x) & set(genre)))]
+        else:
+            filter_g = filter_t
         
         playlist = filter_g.sort_values(['Instance','Avg Weekly','Weeks on Chart'], 
                                         ascending=[True,True,False]).reset_index(drop=True)
