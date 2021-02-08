@@ -37,14 +37,29 @@ BILLBOARD_FEATURES = os.path.join(DATA_DIR_RAW, 'billboard_info.xlsx')
 
 
 def main(targets):
-    
+
+    USERNAME = None
+    PARENT_AGE = None
+    GENRE = None
+
 
     if 'test' in targets:
-        pass
-    
-        
+        # Parse Config File
+        with open('config/test.json') as fh:
+            run_cfg = json.load(fh)
+            USERNAME = run_cfg['username']
+            PARENT_AGE = run_cfg['parent_age']
+            GENRE = run_cfg['genre']
+    else:
+        # Parse Config File
+        with open('config/test.json') as fh:
+            run_cfg = json.load(fh)
+            USERNAME = run_cfg['username']
+            PARENT_AGE = run_cfg['parent_age']
+            GENRE = run_cfg['genre']
 
-    if 'all' in targets or 'load-data' in targets:
+
+    if 'all' in targets or 'load-data' in targets or 'test' in targets:
 
         # Make data directory and subfolders for billboard and last.fm
         print("------------------------- DOWNLOADING RAW TRAINING DATA -------------------------")
@@ -87,7 +102,7 @@ def main(targets):
     if 'all' in targets or 'clean_data' in targets:
         pass
 
-    if 'all' in targets or 'task1' in targets:
+    if 'all' in targets or 'task1' in targets  or 'test' in targets:
 
         print("------------------------- GENERATING T1 RECOMMENDATIONS BASED ON CONFIG -------------------------")
 
@@ -100,13 +115,11 @@ def main(targets):
         # Save to csv
         pd.DataFrame({'song_recommendations': song_recommendations}).to_csv(os.path.join(DATA_DIR_RECOMMENDATIONS, 'song_recs_t1.csv'))
     
-    if 'all' in targets or 'task2' in targets:
+    if 'all' in targets or 'task2' in targets or 'test' in targets:
         print("------------------------- GENERATING T2 RECOMMENDATIONS BASED ON CONFIG -------------------------")
 
         print("LOADING FILES")
         # Read in data
-        print("Loading Billboard")
-        stuff = pd.read_csv(os.path.join(DATA_DIR_RAW, 'billboard_songs.csv'))
 
         print("Loading Last.fm")
         lastfm_profile = pd.read_csv(os.path.join(DATA_DIR_RAW, 'usersha1-profile.tsv'),
@@ -126,24 +139,12 @@ def main(targets):
         age_bins = ((cleaned_users.age // 10) * 10).value_counts().reset_index().sort_values(by='index')
 
 
-        # def extract_users(df, age, age_range):
-        #     start = age - age_range
-        #     end = age + age_range
-        #     users_selected = df[(df['age'] >= start) & (df['age'] <= end)].reset_index(drop=True)
-        #     return users_selected
-
-        # def extract_histories(df, users):
-        #     extracted_history = df[df['user_id'].isin(users['user_id'])]
-        #     return extracted_history
-
         print("CLEANING HISTORY DATA")
         # Choose users
         chosen_users = extract_users(cleaned_users, 55, 5)
         cleaned_history = lastfm_usersong[['user_id', 'artist_id', 'artist_name', 'plays']].dropna().reset_index(drop=True)
         cleaned_history = extract_histories(cleaned_history, cleaned_users)
         chosen_history = extract_histories(cleaned_history, chosen_users)
-
-        #most_occurrence = pd.DataFrame(chosen_history.groupby('artist_name')['plays'].count().sort_values(ascending=False))
 
 
         print("CREATING SPOTIPY OBJECT")
@@ -157,7 +158,7 @@ def main(targets):
         # The permissions that our application will ask for
         scope = " ".join(['playlist-modify-public',"user-top-read","user-read-recently-played","playlist-read-private"])
 
-        username = 'gazzaniga3'
+        username = USERNAME
 
         # Oauth object    
         sp_oauth = spotipy.oauth2.SpotifyOAuth(client_id, client_secret, redirect_uri, scope=scope, username=username)
@@ -173,79 +174,6 @@ def main(targets):
             os.remove(f'.cache-{username}')
             sp = spotipy.Spotify(auth_manager=sp_oauth)
         print("Created spotipy object")
-
-
-        # def get_genres(row):
-        #     artist = row['artist_name']
-        #     uri = sp.search(artist)['tracks']['items'][0]['album']['artists'][0]['uri']
-        #     artist_info = sp.artist(uri)
-        #     genres = artist_info['genres']
-        #     row['genres'] = genres
-        #     return 
-            
-        # def get_related_artist(uri):
-        #     related = sp.artist_related_artists(uri)
-        #     related_lst = []
-        #     for artist in related['artists'][:5]:
-        #         related_lst.append(artist['name'])
-        #     return related_lst
-
-        # def get_top_tracks(uri):
-        #     top_tracks = sp.artist_top_tracks(uri)
-        #     top_lst = []
-        #     for track in top_tracks['tracks'][:5]:
-        #         top_lst.append(track['name'])
-        #     return top_lst
-
-        # def extract_features(row):
-        #     artist = row['artist_name']
-        #     uri = sp.search(artist)['tracks']['items'][0]['album']['artists'][0]['uri']
-        #     related_artists_extracted = get_related_artist(uri)
-        #     top_tracks_extracted = get_top_tracks(uri)
-        #     artist_info = sp.artist(uri)
-        #     genres = artist_info['genres']
-        #     popularity = artist_info['popularity']
-        #     followers = artist_info['followers']['total']
-        #     row['uri'] = uri
-        #     row['genres'] = genres
-        #     row['related_artists'] = related_artists_extracted
-        #     row['top_tracks'] = top_tracks_extracted
-        #     row['popularity'] = popularity
-        #     row['followers'] = followers
-        #     return row
-
-        #print("GETTING TOP ARTISTS")
-        # Getting top artists
-        #top_artists = most_occurrence
-        #top_artists.reset_index(level=0, inplace=True)
-        #top_artists = top_artists[top_artists['plays'] > 10]
-        #top_artist_df = top_artists.apply(extract_features, axis=1)
-        #selection = ['country']
-        #top_artist_df = top_artist_df[top_artist_df.genres.apply(lambda x: bool(set(x) & set(selection)))]
-
-        #print("GETTING TOP TRACKS")
-        # Getting top tracks
-        #top_tracks = pd.DataFrame(top_artist_df['top_tracks'].explode().reset_index(drop=True))
-        #top_tracks.columns = ['track_name']
-        #top_tracks = top_tracks[:100]
-
-        # def extract_track_features(row):
-        #     uri = sp.search(row)['tracks']['items'][0]['uri']
-        #     features = sp.audio_features(uri)[0]
-        #     dance = features['danceability']
-        #     energy = features['energy']
-        #     key = features['key']
-        #     loudness = features['loudness']
-        #     mode = features['mode']
-        #     speech = features['speechiness']
-        #     acoustic = features['acousticness']
-        #     instrument = features['instrumentalness']
-        #     live = features['liveness']
-        #     valence = features['valence']
-        #     tempo = features['tempo']
-        #     return uri, dance, energy, key, loudness, mode, speech, acoustic, instrument, live, valence, tempo
-            
-        #top_tracks['uri'], top_tracks['danceability'], top_tracks['energy'], top_tracks['key'], top_tracks['loudness'], top_tracks['mode'], top_tracks['speechiness'], top_tracks['acousticness'], top_tracks['instrumentalness'], top_tracks['liveness'], top_tracks['valence'], top_tracks['valence'] = zip(*top_tracks['track_name'].apply(extract_track_features))
 
         ap = chosen_history
 
@@ -273,33 +201,6 @@ def main(targets):
 
         print("GETTING USER PLAYLISTS")
         r = sp.current_user_playlists()
-
-        # def parse_playlist_ids(response):
-        #     playlist_ids = []
-        #     for item in response['items']:
-        #         pid = item['id']
-
-        #         playlist_ids.append(pid)
-        #     return playlist_ids
-
-        # def parse_track_info(response):
-        #     track_names = []
-        #     artist_names = []
-        #     album_names = []
-            
-        #     for item in r['items']:
-                        
-        #         # Gets the name of the track
-        #         track = item['track']['name']
-        #         # Gets the name of the album
-        #         album = item['track']['album']['name']
-        #         # Gets the name of the first artist listed under album artists
-        #         artist = item['track']['album']['artists'][0]['name']
-                    
-        #         track_names.append(track)
-        #         album_names.append(album)
-        #         artist_names.append(artist) 
-        #     return track_names, album_names, artist_names
 
         playlist_ids = parse_playlist_ids(r)
 
@@ -365,22 +266,6 @@ def main(targets):
         user_vecs = model.user_factors
         artist_vecs = model.item_factors
 
-        # def recommend(user_id, sparse_user_artist, user_vecs, artist_vecs, num_contents=10):
-        #     user_interactions = sparse_user_artist[user_id,:].toarray()
-        #     user_interactions = user_interactions.reshape(-1) + 1
-        #     user_interactions[user_interactions > 1] = 0
-        #     rec_vector = user_vecs[user_id,:].dot(artist_vecs.T)
-        #     min_max = MinMaxScaler()
-        #     rec_vector_scaled = min_max.fit_transform(rec_vector.reshape(-1,1))[:,0]
-        #     recommend_vector = user_interactions * rec_vector_scaled
-        #     content_idx = np.argsort(recommend_vector)[::-1][:num_contents]
-        #     artists = []
-        #     scores = []
-        #     for idx in content_idx:
-        #         artists.append(grouped_df.artist_name.loc[grouped_df.artist_id == idx].iloc[0])
-        #         scores.append(recommend_vector[idx])
-        #     recommendations = pd.DataFrame({'artist_name': artists, 'score': scores})
-        #     return recommendations
 
         # Create recommendations for current user
         user_id = curr_user
@@ -392,14 +277,6 @@ def main(targets):
 
         artist_list = recommendations['artist_name'].to_list()
 
-        # def get_top_recommended_tracks(artist_list):
-        #     top_list = []
-        #     for artist in artist_list:
-        #         uri = sp.search(artist)['tracks']['items'][0]['album']['artists'][0]['uri']
-        #         top_tracks = sp.artist_top_tracks(uri)
-        #         for track in top_tracks['tracks'][:5]:
-        #             top_list.append(track['name'])
-        #     return top_list
 
         recommended_tracks = pd.DataFrame(get_top_recommended_tracks(artist_list, sp), columns=['track_name'])
 

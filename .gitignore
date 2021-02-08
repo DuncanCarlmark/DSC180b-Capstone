@@ -1,9 +1,11 @@
+data
 data/*
-.DS_Store
-.cache*
-*-checkpoint.ipynb
-notebooks/.cache*
-notebooks/*-checkpoint.ipynb
-src/__pycache__
 
+**.ipynb_checkpoints
 
+.ipynb_checkpoints
+
+**__pycache__
+**__pycache__/*
+
+**/notebooks/.cache-gazzaniga3
