@@ -1,10 +1,13 @@
 import sys
 import json
 import os
-import math
+import pandas as pd
 import requests
 from collections import defaultdict
 
+
+# Custom Library Imports
+from src.build_lib.billboard_build import billboard
 
 
 
@@ -13,6 +16,7 @@ from collections import defaultdict
 DATA_DIR = 'data'
 DATA_DIR_RAW = os.path.join(DATA_DIR, 'raw')
 DATA_DIR_CLEAN = os.path.join(DATA_DIR, 'clean')
+DATA_DIR_RECOMMENDATIONS = os.path.join(DATA_DIR, 'recommendations')
 
 USER_PROFILE = os.path.join(DATA_DIR_RAW, 'usersha1-profile.tsv')
 USER_ARTIST = os.path.join(DATA_DIR_RAW, 'usersha1-artmbid-artname-plays.tsv')
@@ -43,6 +47,7 @@ def main(targets):
             os.mkdir(DATA_DIR)
             os.mkdir(DATA_DIR_RAW)
             os.mkdir(DATA_DIR_CLEAN)
+            os.mkdir(DATA_DIR_RECOMMENDATIONS)
             print('Data directory files created')
 
 
@@ -71,7 +76,17 @@ def main(targets):
         pass
 
     if 'task1' in targets:
-        pass
+
+        print("------------------------- GENERATING RECOMMENDATIONS BASED ON CONFIG -------------------------")
+
+        # Create billboard client
+        print('Creating list of recommended songs')
+        billboard_recommender = billboard()
+        song_recommendations = billboard_recommender.getList(startY=2010, endY=2020, genre=['electronica'])
+
+        print('Saving list of recommended songs')
+        # Save to csv
+        pd.DataFrame({'song_recommendations': song_recommendations}).to_csv(os.path.join(DATA_DIR_RECOMMENDATIONS, 'song_recs.csv'))
     
     if 'task2' in targets:
         pass
