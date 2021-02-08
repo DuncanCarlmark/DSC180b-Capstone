@@ -40,3 +40,12 @@ genre: The parent's preferred genre of music
 This information would normally be provided by users through a form on our website, but for this situation
 we just reference configuration files.
 
+
+### IN THE FUTURE
+
+We plan on adding a clean-data target that isolates some of the small preprocessing that our code does: dropping na values
+small transformations, etc.
+
+Instead of caching an auth_token for a specific user, we want to just directly load listening history. This would be a more
+straightforward procedure, the problem is that we inevitably have to authenticate regardless of if we have our user data predownloaded or not. Spotify has another authentication flow that would better suit itself to this situation, and we will be looking into that in the future.
+
