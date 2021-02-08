@@ -100,7 +100,7 @@ def main(targets):
         # Save to csv
         pd.DataFrame({'song_recommendations': song_recommendations}).to_csv(os.path.join(DATA_DIR_RECOMMENDATIONS, 'song_recs_t1.csv'))
     
-    if 'task2' in targets:
+    if 'all' in targets or 'task2' in targets:
         print("------------------------- GENERATING T2 RECOMMENDATIONS BASED ON CONFIG -------------------------")
 
         print("LOADING FILES")
