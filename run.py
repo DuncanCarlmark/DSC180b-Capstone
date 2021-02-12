@@ -184,18 +184,9 @@ def main(targets):
 
         ap = chosen_history
 
-        artist_rank = ap.groupby(['artist_name']) \
-        .agg({'user_id' : 'count', 'plays' : 'sum'}) \
-        .rename(columns={"user_id" : 'totalUniqueUsers', "plays" : "totalArtistPlays"}) \
-        .sort_values(['totalArtistPlays'], ascending=False)
-        artist_rank['avgUserPlays'] = artist_rank['totalArtistPlays'] / artist_rank['totalUniqueUsers']
-
-        ap = ap.join(artist_rank, on="artist_name", how="inner") \
-        .sort_values(['plays'], ascending=False)
-
-        pc = ap.plays
-        play_count_scaled = (pc - pc.min()) / (pc.max() - pc.min())
-        ap = ap.assign(playCountScaled=play_count_scaled)
+        playCount = ap.plays
+        normalizedCount = (pc - pc.min()) / (pc.max() - pc.min())
+        ap = ap.assign(playCountScaled=normalizedCount)
 
         ap = ap.drop_duplicates()
         grouped_df = ap.groupby(['user_id', 'artist_id', 'artist_name']).sum().reset_index()
@@ -223,7 +214,6 @@ def main(targets):
             r = sp.playlist_items(pid)
             
             tracks, albums, artists = parse_track_info(r)
-            break
 
         playlist_artists = pd.Series(artists)
         playlist_grouped = playlist_artists.value_counts(normalize=True)
