@@ -25,15 +25,18 @@ from src.models.model_task2 import *
 
 # Paths for storing data
 DATA_DIR = 'data'
+# Data subdirectories
 DATA_DIR_RAW = os.path.join(DATA_DIR, 'raw')
 DATA_DIR_CLEAN = os.path.join(DATA_DIR, 'clean')
 DATA_DIR_RECOMMENDATIONS = os.path.join(DATA_DIR, 'recommendations')
 
-USER_PROFILE = os.path.join(DATA_DIR_RAW, 'usersha1-profile.tsv')
-USER_ARTIST = os.path.join(DATA_DIR_RAW, 'usersha1-artmbid-artname-plays.tsv')
+# last.fm files
+USER_PROFILE = os.path.join(DATA_DIR_RAW, 'user_profile.csv')
+USER_ARTIST = os.path.join(DATA_DIR_RAW, 'user_artist.csv')
 
+# billboard files
 BILLBOARD_SONGS = os.path.join(DATA_DIR_RAW, 'billboard_songs.csv')
-BILLBOARD_FEATURES = os.path.join(DATA_DIR_RAW, 'billboard_info.xlsx')
+BILLBOARD_FEATURES = os.path.join(DATA_DIR_RAW, 'billboard_features.csv')
 
 
 
