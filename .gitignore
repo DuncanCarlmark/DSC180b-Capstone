@@ -11,3 +11,6 @@ __pycache__/*
 **__pycache__/*
 
 **/notebooks/.cache-gazzaniga3
+
+spotify_client_info.txt
+*.tsv

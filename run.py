@@ -36,6 +36,8 @@ BILLBOARD_FEATURES = os.path.join(DATA_DIR_RAW, 'billboard_info.xlsx')
 
 
 
+
+
 def main(targets):
 
     USERNAME = None
@@ -138,7 +140,6 @@ def main(targets):
         cleaned_users_us = cleaned_users[cleaned_users['country'] == 'United States']
         cleaned_users = cleaned_users_us[cleaned_users_us['age'] > 0]
 
-        age_bins = ((cleaned_users.age // 10) * 10).value_counts().reset_index().sort_values(by='index')
 
 
         print("CLEANING HISTORY DATA")
