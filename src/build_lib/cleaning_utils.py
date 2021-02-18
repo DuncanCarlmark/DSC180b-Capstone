@@ -3,9 +3,7 @@ import pandas as pd
 #---------------------------------------------------- CLEANING BILLBOARD DATA ----------------------------------------------------
 
 def clean_billboard(billboard_songs, billboard_features):
-
-    billboard_songs['WeekID'] = pd.to_datetime(billboard_songs.reset_index()['WeekID'])
-
+    
     billboard_features = billboard_features.dropna(subset=['spotify_track_id', 'spotify_genre']).drop_duplicates(subset='spotify_track_id')
     billboard_features['spotify_genre'] = [x.strip('[]').strip('\'').split('\', \'') for x in billboard_features['spotify_genre']]
 

@@ -55,7 +55,7 @@ def main(targets):
 
     USERNAME = None
     PARENT_AGE = None
-    GENRE = None
+    GENRES = None
 
 
     if 'test' in targets:
@@ -64,7 +64,7 @@ def main(targets):
             run_cfg = json.load(fh)
             USERNAME = run_cfg['username']
             PARENT_AGE = run_cfg['parent_age']
-            GENRE = run_cfg['genre']
+            GENRES = run_cfg['genre']
             CACHE_PATH = os.path.join('test', '.cache-' + USERNAME)
     else:
         # Parse Config File
@@ -72,7 +72,7 @@ def main(targets):
             run_cfg = json.load(fh)
             USERNAME = run_cfg['username']
             PARENT_AGE = run_cfg['parent_age']
-            GENRE = run_cfg['genre']
+            GENRES = run_cfg['genre']
 
 
 # ------------------------------------------------------ LOAD DATA ------------------------------------------------------
@@ -155,13 +155,14 @@ def main(targets):
     if 'all' in targets or 'task1' in targets  or 'test' in targets:
 
         print("---------------------------------------- GENERATING T1 RECOMMENDATIONS BASED ON CONFIG ----------------------------------------")
+
         billboard_songs = pd.read_csv(BILLBOARD_SONGS_PATH_CLEAN)
         billboard_features = pd.read_csv(BILLBOARD_FEATURES_PATH_CLEAN)
 
         # Create billboard client
         print('Creating list of recommended songs')
         billboard_recommender = billboard(billboard_songs, billboard_features)
-        song_recommendations = billboard_recommender.getList(startY=2010, endY=2020, genre=[GENRE])
+        song_recommendations = billboard_recommender.getList(startY=2010, endY=2020, genre=[GENRES])
 
         print('Saving list of recommended songs')
         # Save to csv
@@ -174,18 +175,16 @@ def main(targets):
 
 
     if 'all' in targets or 'task2' in targets or 'test' in targets:
+
         print("---------------------------------------- GENERATING T2 RECOMMENDATIONS BASED ON CONFIG ----------------------------------------")
 
         print("LOADING FILES")
-        # Read in data
-
         print("Loading Last.fm")
-        
         user_profile_df, user_artist_df = read_datafiles(USER_PROFILE_PATH_CLEAN, USER_ARTIST_PATH_CLEAN)
         
-        parent_age = 55
         age_range = 5
-        chosen_users = extract_users(user_profile_df, parent_age, age_range)
+        # Extracting users and user history based on parent age
+        chosen_users = extract_users(user_profile_df, PARENT_AGE, age_range)
         chosen_history = extract_histories(user_artist_df, chosen_users)
 
 
@@ -200,53 +199,46 @@ def main(targets):
         # The permissions that our application will ask for
         scope = " ".join(['playlist-modify-public',"user-top-read","user-read-recently-played","playlist-read-private"])
 
-        username = USERNAME
+        
         sp_oauth = None
         # Oauth object    
         if 'test' in targets:
             sp_oauth = spotipy.oauth2.SpotifyOAuth(client_id, client_secret, redirect_uri, 
-                                                    scope=scope, cache_path = CACHE_PATH, username=username)
+                                                    scope=scope, cache_path = CACHE_PATH, username=USERNAME)
         else:
             sp_oauth = spotipy.oauth2.SpotifyOAuth(client_id, client_secret, redirect_uri, 
-                                                    scope=scope, username=username)
+                                                    scope=scope, username=USERNAME)
         print("Created Oauth object")
 
         try:
             sp = spotipy.Spotify(auth_manager=sp_oauth)
         except:
-            os.remove(f'.cache-{username}')
+            os.remove(f'.cache-{USERNAME}')
             sp = spotipy.Spotify(auth_manager=sp_oauth)
         print("Created spotipy object")
 
         grouped_df = prepare_dataset(chosen_history)
 
         print("GETTING USER PLAYLISTS")
-        
         playlist_df, current_user = pull_user_playlist_info(sp, grouped_df)
         
-        
+        print("COMBINING USER HISTORY WITH LAST.FM HISTORY")
         updated_df = updated_df_with_user(grouped_df, playlist_df)
 
-        print("CREATING ARTIST-USER AND USER-ARTIST MATRICIES")
-        
-
+        print("FITTING ALS MODEL")
         alpha = 15
-        
-        print("FITTING ALS MODELS")
-
         # Create recommendations for current user
         user_id = current_user
-        
         sparse_user_artist, user_vecs, artist_vecs = build_implicit_model(updated_df, alpha)
         
         print("GENERATING RECOMMMENDATIONS LIST")
-        
         artist_recommendations = recommend(sp, user_id, sparse_user_artist, user_vecs, artist_vecs, updated_df)
 
-        selection = ['rock']
+       
         N = 50
-
-        recommended_tracks = get_top_recommended_tracks(artist_recommendations, selection, N)
+        
+        print("SELECTING TOP " +str(N)+ " RECOMMENDATIONS")
+        recommended_tracks = get_top_recommended_tracks(artist_recommendations, GENRES, N)
 
         recommended_tracks.to_csv(os.path.join(DATA_DIR_RECOMMENDATIONS, 'song_recs_t2.csv'))
 
