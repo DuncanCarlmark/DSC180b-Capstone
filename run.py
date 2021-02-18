@@ -155,15 +155,18 @@ def main(targets):
     if 'all' in targets or 'task1' in targets  or 'test' in targets:
 
         print("---------------------------------------- GENERATING T1 RECOMMENDATIONS BASED ON CONFIG ----------------------------------------")
+        billboard_songs = pd.read_csv(BILLBOARD_SONGS_PATH_CLEAN)
+        billboard_features = pd.read_csv(BILLBOARD_FEATURES_PATH_CLEAN)
 
         # Create billboard client
         print('Creating list of recommended songs')
-        billboard_recommender = billboard()
+        billboard_recommender = billboard(billboard_songs, billboard_features)
         song_recommendations = billboard_recommender.getList(startY=2010, endY=2020, genre=[GENRE])
 
         print('Saving list of recommended songs')
         # Save to csv
         print(len(song_recommendations))
+
         pd.DataFrame({'song_recommendations': song_recommendations}).to_csv(os.path.join(DATA_DIR_RECOMMENDATIONS, 'song_recs_t1.csv'))
 
 

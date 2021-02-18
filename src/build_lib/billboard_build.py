@@ -3,32 +3,28 @@ import numpy as np
 import datetime
 
 class billboard:
-    def __init__(self):
-        #features = pd.read_csv('Hot 100 Audio Features.csv')
-        f = pd.read_excel('data/raw/billboard_info.xlsx',usecols=[0,1,2,3,4])
-        # only include tracks that have a spotify id on file for now
-        #f = f[~f['spotify_track_id'].isnull()][f.columns[0:5]].drop_duplicates()
-        f = f.dropna(subset=['spotify_track_id', 'spotify_genre']).drop_duplicates(subset='spotify_track_id')
-        f['spotify_genre'] = [x.strip('[]').strip('\'').split('\', \'') for x in f['spotify_genre']]
-        self.features = f
+    def __init__(self, billboard_songs, billboard_features):
+        
+        # Column must be converted to datetime any time the file is read in
+        billboard_songs['WeekID'] = pd.to_datetime(billboard_songs.reset_index()['WeekID'])
 
-        #stuff = pd.read_csv('Hot Stuff.csv')
-        stuff = pd.read_csv('data/raw/billboard_songs.csv')
-        stuff['WeekID'] = pd.to_datetime(stuff['WeekID'])
-        self.stuff = stuff
+        self.billboard_songs = billboard_songs
+        self.billboard_features = billboard_features
+
+        
 
     def weeklyAvg(self):
         # average weekly position
-        avg_pos = self.stuff[['WeekID', 'Week Position', 'SongID']].groupby(by=['SongID']).mean()
+        avg_pos = self.billboard_songs[['WeekID', 'Week Position', 'SongID']].groupby(by=['SongID']).mean()
         # first week the track appeared in the chart
-        minweek = self.stuff[['WeekID', 'SongID']].groupby(by=['SongID']).min().rename(columns={'WeekID':'firstWeekID'})
+        minweek = self.billboard_songs[['WeekID', 'SongID']].groupby(by=['SongID']).min().rename(columns={'WeekID':'firstWeekID'})
         # last week the track appeared in the chart
-        maxweek = self.stuff[['WeekID', 'SongID']].groupby(by=['SongID']).max().rename(columns={'WeekID':'lastWeekID'})
+        maxweek = self.billboard_songs[['WeekID', 'SongID']].groupby(by=['SongID']).max().rename(columns={'WeekID':'lastWeekID'})
         # total # of weeks the track was in the chart
-        max_occ = self.stuff[['SongID','Instance','Weeks on Chart']].groupby(by=['SongID']).max()
+        max_occ = self.billboard_songs[['SongID','Instance','Weeks on Chart']].groupby(by=['SongID']).max()
 
         stats = avg_pos.join(minweek).join(maxweek).join(max_occ)
-        self.data = self.features.join(stats, on='SongID').rename(columns={'Week Position':'Avg Weekly'})
+        self.data = self.billboard_features.join(stats, on='SongID').rename(columns={'Week Position':'Avg Weekly'})
 
     def getList(self, how='avg', length=30, genre=[], startY=2019, endY=2019):
         # songs should have left chart after lower bound (e.g. 2019 songs should still be on chart after 2019/1/1)
