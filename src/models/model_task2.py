@@ -41,22 +41,7 @@ def extract_histories(df, users):
     extracted_history = df[df['user_id'].isin(users['user_id'])]
     return extracted_history
 
-def clean_datasets(user_profile_df, user_artist_df):
-    
-    # Drop rows with missing values
-    users_wo_na = user_profile_df[['user_id', 'age', 'country']].dropna().reset_index(drop=True)
-    
-    # Select rows with users from US-recommendation task targeted to US users
-    cleaned_users_us = users_wo_na[users_wo_na['country'] == 'United States']
-    cleaned_users = cleaned_users_us[cleaned_users_us['age'] > 0]
-    
-    # Drop rows with missing values
-    cleaned_history = user_artist_df[['user_id', 'artist_id', 'artist_name', 'plays']].dropna().reset_index(drop=True)
-    
-    # Extract listening histories from US users 
-    cleaned_history = extract_histories(cleaned_history, cleaned_users)
-    
-    return cleaned_users, cleaned_history
+
 
 def prepare_dataset(extracted_history):
     ap = extracted_history

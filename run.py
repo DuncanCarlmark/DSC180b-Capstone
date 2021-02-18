@@ -20,6 +20,7 @@ from ipywidgets import FloatProgress
 from src.build_lib.billboard_build import billboard
 from src.build_lib.task2_utils import *
 from src.models.model_task2 import *
+from src.build_lib.cleaning_utils import *
 
 
 
@@ -30,13 +31,21 @@ DATA_DIR_RAW = os.path.join(DATA_DIR, 'raw')
 DATA_DIR_CLEAN = os.path.join(DATA_DIR, 'clean')
 DATA_DIR_RECOMMENDATIONS = os.path.join(DATA_DIR, 'recommendations')
 
-# last.fm files
-USER_PROFILE_PATH = os.path.join(DATA_DIR_RAW, 'user_profile.csv')
-USER_ARTIST_PATH = os.path.join(DATA_DIR_RAW, 'user_artist.csv')
+# last.fm files 
+USER_PROFILE_PATH_RAW = os.path.join(DATA_DIR_RAW, 'user_profile.csv')
+USER_ARTIST_PATH_RAW = os.path.join(DATA_DIR_RAW, 'user_artist.csv')
 
 # billboard files
-BILLBOARD_SONGS_PATH = os.path.join(DATA_DIR_RAW, 'billboard_songs.csv')
-BILLBOARD_FEATURES_PATH = os.path.join(DATA_DIR_RAW, 'billboard_features.csv')
+BILLBOARD_SONGS_PATH_RAW = os.path.join(DATA_DIR_RAW, 'billboard_songs.csv')
+BILLBOARD_FEATURES_PATH_RAW = os.path.join(DATA_DIR_RAW, 'billboard_features.csv')
+
+# last.fm files
+USER_PROFILE_PATH_CLEAN = os.path.join(DATA_DIR_CLEAN, 'user_profile.csv')
+USER_ARTIST_PATH_CLEAN = os.path.join(DATA_DIR_CLEAN, 'user_artist.csv')
+
+# billboard files
+BILLBOARD_SONGS_PATH_CLEAN = os.path.join(DATA_DIR_CLEAN, 'billboard_songs.csv')
+BILLBOARD_FEATURES_PATH_CLEAN = os.path.join(DATA_DIR_CLEAN, 'billboard_features.csv')
 
 
 
@@ -66,10 +75,13 @@ def main(targets):
             GENRE = run_cfg['genre']
 
 
+# ------------------------------------------------------ LOAD DATA ------------------------------------------------------
+
+
     if 'all' in targets or 'load-data' in targets or 'test' in targets:
 
         # Make data directory and subfolders for billboard and last.fm
-        print("------------------------- DOWNLOADING RAW TRAINING DATA -------------------------")
+        print("---------------------------------------- DOWNLOADING RAW TRAINING DATA ----------------------------------------")
 
         # Make necessary directories if they do not already exist
         print("CREATING DATA DIRECTORIES")
@@ -80,38 +92,69 @@ def main(targets):
             os.mkdir(DATA_DIR_RAW)
             os.mkdir(DATA_DIR_CLEAN)
             os.mkdir(DATA_DIR_RECOMMENDATIONS)
-            print('Data directory files created')
+            print('Data directories created')
 
 
         # Load data if necessary
         print("DOWNLOADING TRAINING DATA")
-        if os.path.isfile(USER_PROFILE_PATH) and os.path.isfile(USER_ARTIST_PATH):
-            print("Data files already exist. Skipping download.")
+        if os.path.isfile(USER_PROFILE_PATH_RAW) and os.path.isfile(USER_ARTIST_PATH_RAW):
+            print("Data files already exist. Skipping download")
 
         else:
             # LAST.FM files
-            r = requests.get('https://capstone-raw-data.s3-us-west-2.amazonaws.com/usersha1-profile.tsv')
-            open(USER_PROFILE_PATH, 'wb').write(r.content)
+            r = requests.get('https://capstone-raw-data.s3-us-west-2.amazonaws.com/user_profile.csv')
+            open(USER_PROFILE_PATH_RAW, 'wb').write(r.content)
 
-            r = requests.get('https://capstone-raw-data.s3-us-west-2.amazonaws.com/usersha1-artmbid-artname-plays.tsv')
-            open(USER_ARTIST_PATH, 'wb').write(r.content)
-            print('Data files downloaded.')
+            r = requests.get('https://capstone-raw-data.s3-us-west-2.amazonaws.com/user_artist.csv')
+            open(USER_ARTIST_PATH_RAW, 'wb').write(r.content)
+            print('Last.fm data downloaded')
             
             # Billboard files
-            r = requests.get('https://capstone-raw-data.s3-us-west-2.amazonaws.com/billboard-songs.csv')
-            open(BILLBOARD_SONGS_PATH, 'wb').write(r.content)
+            r = requests.get('https://capstone-raw-data.s3-us-west-2.amazonaws.com/billboard_songs.csv')
+            open(BILLBOARD_SONGS_PATH_RAW, 'wb').write(r.content)
 
-            r = requests.get('https://capstone-raw-data.s3-us-west-2.amazonaws.com/billboard-features.xlsx')
-            open(BILLBOARD_FEATURES_PATH, 'wb').write(r.content)
+            r = requests.get('https://capstone-raw-data.s3-us-west-2.amazonaws.com/billboard_features.csv')
+            open(BILLBOARD_FEATURES_PATH_RAW, 'wb').write(r.content)
+            print('Billboard data downloaded')
+
+
+# ------------------------------------------------------ CLEAN DATA ------------------------------------------------------
+
 
     # WILL BE IMPLEMENTED IN FUTURE
     # SIMPLE CLEANING OCCURS IN TASK1 AND TASK 2
-    if 'all' in targets or 'clean_data' in targets:
-        pass
+    if 'all' in targets or 'clean-data' in targets:
+
+        print("---------------------------------------- CLEANING TRAINING DATA ----------------------------------------")
+
+        # Cleaning billboard data
+        print('CLEANING BILLBOARD DATA')
+        billboard_songs = pd.read_csv(BILLBOARD_SONGS_PATH_RAW)
+        billboard_features = pd.read_csv(BILLBOARD_FEATURES_PATH_RAW)
+        billboard_songs, billboard_features = clean_billboard(billboard_songs, billboard_features)     
+        print('Billboard data cleaned')   
+
+        # Cleaning last.fm data
+        print('CLEANING LAST.FM DATA')
+        user_profile_df = pd.read_csv(USER_PROFILE_PATH_RAW)
+        user_artist_df = pd.read_csv(USER_ARTIST_PATH_RAW)
+        user_profile_df, user_artist_df = clean_billboard(user_profile_df, user_artist_df)
+        print('Last.fm data cleaned')        
+
+        # Save cleaned files to clean directory
+        billboard_songs.to_csv(BILLBOARD_SONGS_PATH_CLEAN)
+        billboard_features.to_csv(BILLBOARD_FEATURES_PATH_CLEAN)
+        user_profile_df.to_csv(USER_PROFILE_PATH_CLEAN)
+        user_artist_df.to_csv(USER_PROFILE_PATH_CLEAN)
+        print('Saving cleaned data to data/clean')
+
+
+# ------------------------------------------------------ TASK 1 RECOMMENDATION ------------------------------------------------------
+
 
     if 'all' in targets or 'task1' in targets  or 'test' in targets:
 
-        print("------------------------- GENERATING T1 RECOMMENDATIONS BASED ON CONFIG -------------------------")
+        print("---------------------------------------- GENERATING T1 RECOMMENDATIONS BASED ON CONFIG ----------------------------------------")
 
         # Create billboard client
         print('Creating list of recommended songs')
@@ -122,28 +165,25 @@ def main(targets):
         # Save to csv
         print(len(song_recommendations))
         pd.DataFrame({'song_recommendations': song_recommendations}).to_csv(os.path.join(DATA_DIR_RECOMMENDATIONS, 'song_recs_t1.csv'))
-    
+
+
+# ------------------------------------------------------ TASK 2 RECOMMENDATION ------------------------------------------------------
+
+
     if 'all' in targets or 'task2' in targets or 'test' in targets:
-        print("------------------------- GENERATING T2 RECOMMENDATIONS BASED ON CONFIG -------------------------")
+        print("---------------------------------------- GENERATING T2 RECOMMENDATIONS BASED ON CONFIG ----------------------------------------")
 
         print("LOADING FILES")
         # Read in data
 
         print("Loading Last.fm")
         
-        user_profile_df, user_artist_df = read_datafiles(USER_PROFILE_PATH, USER_ARTIST_PATH)
-
-        print("CLEANING USER DATA")
-        # Minor data cleaning
-
-        cleaned_users, cleaned_history = clean_datasets(user_profile_df, user_artist_df)
-        print("CLEANING HISTORY DATA")
-        # Choose users
+        user_profile_df, user_artist_df = read_datafiles(USER_PROFILE_PATH_CLEAN, USER_ARTIST_PATH_CLEAN)
         
         parent_age = 55
         age_range = 5
-        chosen_users = extract_users(cleaned_users, parent_age, age_range)
-        chosen_history = extract_histories(cleaned_history, chosen_users)
+        chosen_users = extract_users(user_profile_df, parent_age, age_range)
+        chosen_history = extract_histories(user_artist_df, chosen_users)
 
 
         print("CREATING SPOTIPY OBJECT")
