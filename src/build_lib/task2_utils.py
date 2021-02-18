@@ -27,7 +27,7 @@ def extract_histories(df, users):
     return extracted_history
 
 # Not used?   
-def get_genres(row):
+def get_genres(row, sp):
     artist = row['artist_name']
     uri = sp.search(artist)['tracks']['items'][0]['album']['artists'][0]['uri']
     artist_info = sp.artist(uri)
@@ -36,7 +36,7 @@ def get_genres(row):
     return 
 
 # Needs to have sp as an argument
-def get_related_artist(uri):
+def get_related_artist(uri, sp):
     related = sp.artist_related_artists(uri)
     related_lst = []
     for artist in related['artists'][:5]:
@@ -44,7 +44,7 @@ def get_related_artist(uri):
     return related_lst
 
 # Needs to have sp as an argument
-def get_top_tracks(uri):
+def get_top_tracks(uri, sp):
     top_tracks = sp.artist_top_tracks(uri)
     top_lst = []
     for track in top_tracks['tracks'][:5]:
@@ -53,11 +53,11 @@ def get_top_tracks(uri):
 
 # Needs to have sp as an argument
 # Keyword argument for apply?
-def extract_features(row):
+def extract_features(row, sp):
     artist = row['artist_name']
     uri = sp.search(artist)['tracks']['items'][0]['album']['artists'][0]['uri']
-    related_artists_extracted = get_related_artist(uri)
-    top_tracks_extracted = get_top_tracks(uri)
+    related_artists_extracted = get_related_artist(uri, sp)
+    top_tracks_extracted = get_top_tracks(uri, sp)
     artist_info = sp.artist(uri)
     genres = artist_info['genres']
     popularity = artist_info['popularity']
@@ -72,7 +72,7 @@ def extract_features(row):
 
 # Needs to have sp as an argument
 # Keyword argument for apply?
-def extract_track_features(row):
+def extract_track_features(row, sp):
     uri = sp.search(row)['tracks']['items'][0]['uri']
     features = sp.audio_features(uri)[0]
     dance = features['danceability']
