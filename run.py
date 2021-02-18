@@ -19,6 +19,7 @@ from ipywidgets import FloatProgress
 # Custom Library Imports
 from src.build_lib.billboard_build import billboard
 from src.build_lib.task2_utils import *
+from src.models.model_task2 import *
 
 
 
@@ -126,27 +127,20 @@ def main(targets):
         # Read in data
 
         print("Loading Last.fm")
-        lastfm_profile = pd.read_csv(os.path.join(DATA_DIR_RAW, 'usersha1-profile.tsv'),
-                                    sep='\t', 
-                                    names=['user_id', 'gender', 'age', 'country', 'registered'])
-
-        lastfm_usersong = pd.read_csv(os.path.join(DATA_DIR_RAW,'usersha1-artmbid-artname-plays.tsv'), 
-                                    sep='\t', 
-                                    names=['user_id', 'artist_id', 'artist_name', 'plays'])
+        user_profile_path = os.path.join(DATA_DIR_RAW, 'usersha1-profile.tsv')
+        user_artist_path = os.path.join(DATA_DIR_RAW,'usersha1-artmbid-artname-plays.tsv')
+        user_profile_df, user_artist_df = read_datafiles(user_profile_path, user_artist_path)
 
         print("CLEANING USER DATA")
         # Minor data cleaning
-        cleaned_users = lastfm_profile[['user_id', 'age', 'country']].dropna().reset_index(drop=True)
-        cleaned_users_us = cleaned_users[cleaned_users['country'] == 'United States']
-        cleaned_users = cleaned_users_us[cleaned_users_us['age'] > 0]
 
-
-
+        cleaned_users, cleaned_history = clean_datasets(user_profile_df, user_artist_df)
         print("CLEANING HISTORY DATA")
         # Choose users
-        chosen_users = extract_users(cleaned_users, 55, 5)
-        cleaned_history = lastfm_usersong[['user_id', 'artist_id', 'artist_name', 'plays']].dropna().reset_index(drop=True)
-        cleaned_history = extract_histories(cleaned_history, cleaned_users)
+        
+        parent_age = 55
+        age_range = 5
+        chosen_users = extract_users(cleaned_users, parent_age, age_range)
         chosen_history = extract_histories(cleaned_history, chosen_users)
 
 
@@ -183,110 +177,35 @@ def main(targets):
             sp = spotipy.Spotify(auth_manager=sp_oauth)
         print("Created spotipy object")
 
-        ap = chosen_history
-
-        artist_rank = ap.groupby(['artist_name']) \
-        .agg({'user_id' : 'count', 'plays' : 'sum'}) \
-        .rename(columns={"user_id" : 'totalUniqueUsers', "plays" : "totalArtistPlays"}) \
-        .sort_values(['totalArtistPlays'], ascending=False)
-        artist_rank['avgUserPlays'] = artist_rank['totalArtistPlays'] / artist_rank['totalUniqueUsers']
-
-        ap = ap.join(artist_rank, on="artist_name", how="inner") \
-        .sort_values(['plays'], ascending=False)
-
-        pc = ap.plays
-        play_count_scaled = (pc - pc.min()) / (pc.max() - pc.min())
-        ap = ap.assign(playCountScaled=play_count_scaled)
-
-        ap = ap.drop_duplicates()
-        grouped_df = ap.groupby(['user_id', 'artist_id', 'artist_name']).sum().reset_index()
-
-        grouped_df['artist_name'] = grouped_df['artist_name'].astype("category")
-        grouped_df['user_id'] = grouped_df['user_id'].astype("category")
-        grouped_df['artist_id'] = grouped_df['artist_id'].astype("category")
-        grouped_df['user_id'] = grouped_df['user_id'].cat.codes
-        grouped_df['artist_id'] = grouped_df['artist_id'].cat.codes
+        grouped_df = prepare_dataset(chosen_history)
 
         print("GETTING USER PLAYLISTS")
-        r = sp.current_user_playlists()
-
-        playlist_ids = parse_playlist_ids(r)
-
-
-        # Pull all the tracks from a playlist
-        tracks = []
-        albums = []
-        artists = []
-
-        # Loop through each playlist one by one
-        for pid in playlist_ids:
-            # Request all track information
-            r = sp.playlist_items(pid)
-            
-            tracks, albums, artists = parse_track_info(r)
-            break
-
-        playlist_artists = pd.Series(artists)
-        playlist_grouped = playlist_artists.value_counts(normalize=True)
-
-        no_artist = playlist_grouped.shape[0]
-        curr_user = grouped_df.iloc[-1]['user_id'] + 1
-        curr_user_id = [curr_user] * no_artist
-
-        playlist_df = pd.DataFrame(playlist_grouped, columns=['playCountScaled']) 
-        playlist_df.reset_index(level=0, inplace=True)
-        playlist_df.columns = ['artist_name', 'playCountScaled']
-        playlist_df['user_id'] = pd.Series(curr_user_id)
-
-
-        cols = playlist_df.columns.tolist()
-        cols = cols[-1:] + cols[:-1]
-        playlist_df = playlist_df[cols]
-        playlist_df.head()
-
-        playlist_df['artist_name'] = playlist_df['artist_name'].str.lower()
-
-        artist_pairing = dict(zip(grouped_df.artist_name, grouped_df.artist_id))
-        playlist_df['artist_id'] = playlist_df['artist_name'].map(artist_pairing)
-        playlist_df = playlist_df.dropna().reset_index(drop=True)
-        playlist_df['artist_id'] = playlist_df['artist_id'].astype(int)
-
-        updated_df = grouped_df.append(playlist_df)
-
-        updated_df['artist_name'] = updated_df['artist_name'].astype("category")
-        updated_df['user_id'] = updated_df['user_id'].astype("category")
-        updated_df['artist_id'] = updated_df['artist_id'].astype("category")
-        updated_df['user_id'] = updated_df['user_id'].cat.codes
-        updated_df['artist_id'] = updated_df['artist_id'].cat.codes
+        
+        playlist_df, current_user = pull_user_playlist_info(sp, grouped_df)
+        
+        
+        updated_df = updated_df_with_user(grouped_df, playlist_df)
 
         print("CREATING ARTIST-USER AND USER-ARTIST MATRICIES")
-        sparse_artist_user = sparse.csr_matrix((updated_df['playCountScaled'].astype(float), (updated_df['artist_id'], updated_df['user_id'])))
-        sparse_user_artist = sparse.csr_matrix((updated_df['playCountScaled'].astype(float), (updated_df['user_id'], updated_df['artist_id'])))
-        model = implicit.als.AlternatingLeastSquares(factors=20, regularization=0.1, iterations=50)
         
 
         alpha = 15
-        data = (sparse_artist_user * alpha).astype('double')
-
+        
         print("FITTING ALS MODELS")
-        model.fit(data)
-
-        user_vecs = model.user_factors
-        artist_vecs = model.item_factors
-
 
         # Create recommendations for current user
-        user_id = curr_user
-
+        user_id = current_user
+        
+        sparse_user_artist, user_vecs, artist_vecs = build_implicit_model(updated_df, alpha)
+        
         print("GENERATING RECOMMMENDATIONS LIST")
-        recommendations = recommend(user_id, sparse_user_artist, user_vecs, artist_vecs, updated_df)
+        
+        artist_recommendations = recommend(sp, user_id, sparse_user_artist, user_vecs, artist_vecs, updated_df)
 
-        updated_df.loc[updated_df['user_id'] == curr_user].sort_values(by=['playCountScaled'], ascending=False)[['artist_name', 'user_id', 'playCountScaled']].head(10)
+        selection = ['rock']
+        N = 50
 
-        artist_list = recommendations['artist_name'].to_list()
-
-
-        recommended_tracks = pd.DataFrame(get_top_recommended_tracks(artist_list, sp), columns=['track_name'])
+        recommended_tracks = get_top_recommended_tracks(artist_recommendations, selection, N)
 
         recommended_tracks.to_csv(os.path.join(DATA_DIR_RECOMMENDATIONS, 'song_recs_t2.csv'))
 

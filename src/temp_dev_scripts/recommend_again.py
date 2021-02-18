@@ -1,29 +1,29 @@
 from billboard import billboard
 from sklearn import svm
 import os
-import spotipy
-from spotipy.oauth2 import SpotifyOAuth
-from spotipy.oauth2 import SpotifyClientCredentials
+# import spotipy
+# from spotipy.oauth2 import SpotifyOAuth
+# from spotipy.oauth2 import SpotifyClientCredentials
 
 #sp = spotipy.Spotify(client_credentials_manager=SpotifyClientCredentials(client_id=SPOTIPY_CLIENT_ID, client_secret=SPOTIPY_CLIENT_SECRET))
 
-URI = 'http://localhost:8080'
+# URI = 'http://localhost:8080'
 
-scope = " ".join(['playlist-modify-public',"user-top-read","user-read-recently-played","playlist-read-private"])
+# scope = " ".join(['playlist-modify-public',"user-top-read","user-read-recently-played","playlist-read-private"])
 
-username = 'skdud712'
+# username = 'skdud712'
 
-try:
-    token = spotipy.util.prompt_for_user_token(client_id = SPOTIPY_CLIENT_ID,
-                                               client_secret = SPOTIPY_CLIENT_SECRET,
-                                               redirect_uri = URI,
-                                               scope = scope,
-                                               username=username)
-except:
-    os.remove(f'cache-{username}')
-    token = spotipy.util.prompt_for_user_token(username=username)
+# try:
+#     token = spotipy.util.prompt_for_user_token(client_id = SPOTIPY_CLIENT_ID,
+#                                                client_secret = SPOTIPY_CLIENT_SECRET,
+#                                                redirect_uri = URI,
+#                                                scope = scope,
+#                                                username=username)
+# except:
+#     os.remove(f'cache-{username}')
+#     token = spotipy.util.prompt_for_user_token(username=username)
     
-sp = spotipy.Spotify(auth=token)
+# sp = spotipy.Spotify(auth=token)
 
 playlists = sp.current_user_playlists()['items']
 playlist_id = ''

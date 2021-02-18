@@ -40,7 +40,7 @@ class billboard:
 
         data = self.data
         filter_t = data[(data['firstWeekID'] < upperBound) & (data['lastWeekID'] > lowerBound)]
-         if (len(genre) == 0):
+        if (len(genre) == 0):
             filter_g = filter_t[filter_t.spotify_genre.apply(lambda x: bool(set(x) & set(genre)))]
         else:
             filter_g = filter_t
