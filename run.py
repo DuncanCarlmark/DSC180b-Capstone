@@ -138,14 +138,14 @@ def main(targets):
         print('CLEANING LAST.FM DATA')
         user_profile_df = pd.read_csv(USER_PROFILE_PATH_RAW)
         user_artist_df = pd.read_csv(USER_ARTIST_PATH_RAW)
-        user_profile_df, user_artist_df = clean_billboard(user_profile_df, user_artist_df)
+        user_profile_df, user_artist_df = clean_lastfm(user_profile_df, user_artist_df)
         print('Last.fm data cleaned')        
 
         # Save cleaned files to clean directory
         billboard_songs.to_csv(BILLBOARD_SONGS_PATH_CLEAN)
         billboard_features.to_csv(BILLBOARD_FEATURES_PATH_CLEAN)
         user_profile_df.to_csv(USER_PROFILE_PATH_CLEAN)
-        user_artist_df.to_csv(USER_PROFILE_PATH_CLEAN)
+        user_artist_df.to_csv(USER_ARTIST_PATH_CLEAN)
         print('Saving cleaned data to data/clean')
 
 

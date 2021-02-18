@@ -3,8 +3,6 @@ import pandas as pd
 #---------------------------------------------------- CLEANING BILLBOARD DATA ----------------------------------------------------
 
 def clean_billboard(billboard_songs, billboard_features):
-    print(billboard_songs.columns)
-    print(billboard_songs)
 
     billboard_songs['WeekID'] = pd.to_datetime(billboard_songs.reset_index()['WeekID'])
 
