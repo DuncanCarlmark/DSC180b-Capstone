@@ -233,13 +233,14 @@ def main(targets):
         
         print("GENERATING RECOMMMENDATIONS LIST")
         artist_recommendations = recommend(sp, user_id, sparse_user_artist, user_vecs, artist_vecs, updated_df)
-
        
         N = 50
         
         print("SELECTING TOP " +str(N)+ " RECOMMENDATIONS")
         recommended_tracks = get_top_recommended_tracks(artist_recommendations, GENRES, N)
-
+        
+           
+        print('Saving list of recommended songs')
         recommended_tracks.to_csv(os.path.join(DATA_DIR_RECOMMENDATIONS, 'song_recs_t2.csv'))
 
 if __name__ == '__main__':

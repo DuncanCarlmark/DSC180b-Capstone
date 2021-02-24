@@ -17,10 +17,10 @@ def read_datafiles(user_profile_path, user_artist_path):
     # Read datafiles for the LastFM dataset
      
     # Read user-profile data (user_id, gender, age, country, registered)
-    user_profile_df = pd.read_csv(user_profile_path,sep='\t', names=['user_id', 'gender', 'age', 'country', 'registered'])
+    user_profile_df = pd.read_csv(user_profile_path)
     
     # Read user-artist data (user_id, artist_id, artist name, number of plays)
-    user_artist_df = pd.read_csv(user_artist_path, sep='\t', names=['user_id', 'artist_id', 'artist_name', 'plays'])
+    user_artist_df = pd.read_csv(user_artist_path)
     
     # Return both datasets
     return user_profile_df, user_artist_df
@@ -30,9 +30,9 @@ def extract_users(df, age, age_range):
     # Build age range for users similar to parents
     start = age - age_range
     end = age + age_range
-    
+
     # Select users from parents' age range
-    users_selected = df[(df['age'] >= start) & (df['age'] <= end)].reset_index(drop=True)
+    users_selected = df[(df['age'] >= start) & (df['age'] <= end)].reset_index(drop=True)    
     return users_selected
 
 def extract_histories(df, users):
@@ -40,7 +40,6 @@ def extract_histories(df, users):
     # Extract listening histories from users selected
     extracted_history = df[df['user_id'].isin(users['user_id'])]
     return extracted_history
-
 
 
 def prepare_dataset(extracted_history):
@@ -192,7 +191,10 @@ def recommend(sp, user_id, sparse_user_artist, user_vecs, artist_vecs, user_arti
     scores = []
     for idx in content_idx:
         artist = user_artist_df.artist_name.loc[user_artist_df.artist_id == idx].iloc[0]
-        artist_uri = sp.search(artist)['tracks']['items'][0]['album']['artists'][0]['uri']
+        try:
+            artist_uri = sp.search(artist, type='artist')['artists']['items'][0]['uri']
+        except:
+            continue
         artist_info = sp.artist(artist_uri)
         artist_genre = artist_info['genres']
         artist_tracks = get_top_tracks(sp, artist_uri)
