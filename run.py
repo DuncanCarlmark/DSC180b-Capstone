@@ -64,7 +64,7 @@ def main(targets):
             run_cfg = json.load(fh)
             USERNAME = run_cfg['username']
             PARENT_AGE = run_cfg['parent_age']
-            GENRES = run_cfg['genre']
+            GENRES = run_cfg['genres']
             CACHE_PATH = os.path.join('test', '.cache-' + USERNAME)
     else:
         # Parse Config File
@@ -72,7 +72,7 @@ def main(targets):
             run_cfg = json.load(fh)
             USERNAME = run_cfg['username']
             PARENT_AGE = run_cfg['parent_age']
-            GENRES = run_cfg['genre']
+            GENRES = run_cfg['genres']
 
 
 # ------------------------------------------------------ LOAD DATA ------------------------------------------------------
