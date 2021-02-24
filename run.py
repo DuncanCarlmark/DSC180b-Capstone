@@ -142,10 +142,10 @@ def main(targets):
         print('Last.fm data cleaned')        
 
         # Save cleaned files to clean directory
-        billboard_songs.to_csv(BILLBOARD_SONGS_PATH_CLEAN)
-        billboard_features.to_csv(BILLBOARD_FEATURES_PATH_CLEAN)
-        user_profile_df.to_csv(USER_PROFILE_PATH_CLEAN)
-        user_artist_df.to_csv(USER_ARTIST_PATH_CLEAN)
+        billboard_songs.to_csv(BILLBOARD_SONGS_PATH_CLEAN, index = False)
+        billboard_features.to_csv(BILLBOARD_FEATURES_PATH_CLEAN, index = False)
+        user_profile_df.to_csv(USER_PROFILE_PATH_CLEAN, index = False)
+        user_artist_df.to_csv(USER_ARTIST_PATH_CLEAN, index = False)
         print('Saving cleaned data to data/clean')
 
 
