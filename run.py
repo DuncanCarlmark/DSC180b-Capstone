@@ -18,7 +18,7 @@ from ipywidgets import FloatProgress
 
 # Custom Library Imports
 from src.build_lib.billboard_build import billboard
-from src.build_lib.task2_utils import *
+#from src.build_lib.task2_utils import *
 from src.models.model_task2 import *
 from src.build_lib.cleaning_utils import *
 
@@ -234,10 +234,10 @@ def main(targets):
         print("GENERATING RECOMMMENDATIONS LIST")
         artist_recommendations = recommend(sp, user_id, sparse_user_artist, user_vecs, artist_vecs, updated_df)
        
-        N = 50
+        N = 30
         
-        print("SELECTING TOP " +str(N)+ " RECOMMENDATIONS")
-        recommended_tracks = get_top_recommended_tracks(artist_recommendations, GENRES, N)
+        #print("SELECTING TOP " +str(N)+ " RECOMMENDATIONS")
+        recommended_tracks = get_top_recommended_tracks(sp, artist_recommendations, GENRES, N)
         
            
         print('Saving list of recommended songs')
