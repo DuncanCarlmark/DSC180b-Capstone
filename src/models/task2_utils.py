@@ -13,18 +13,6 @@ from sklearn.preprocessing import MinMaxScaler
 import ipywidgets
 from ipywidgets import FloatProgress
 
-def read_datafiles(user_profile_path, user_artist_path):
-    # Read datafiles for the LastFM dataset
-     
-    # Read user-profile data (user_id, gender, age, country, registered)
-    user_profile_df = pd.read_csv(user_profile_path)
-    
-    # Read user-artist data (user_id, artist_id, artist name, number of plays)
-    user_artist_df = pd.read_csv(user_artist_path)
-    
-    # Return both datasets
-    return user_profile_df, user_artist_df
-
 def extract_users(df, age, age_range):
     
     # Build age range for users similar to parents
@@ -112,7 +100,7 @@ def pull_user_playlist_info(sp, user_artist_df):
         artists.extend(artists_pulled)
     
     
-    # Artists the user has listened to-normalized
+    # Artists the user has listened-normalized frequency
     playlist_artists = pd.Series(artists)
     playlist_grouped = playlist_artists.value_counts(normalize=True)
     
