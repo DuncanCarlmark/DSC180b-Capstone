@@ -42,11 +42,12 @@ class userParent:
         alpha = 15
         # Create recommendations for current user
         user_id = current_user
-        sparse_user_artist, user_vecs, artist_vecs = build_implicit_model(updated_df, alpha)
+        sparse_user_artist, sparse_artist_user, user_vecs, artist_vecs = build_implicit_model(updated_df, alpha)
         
         
         self.current_user = user_id
         self.user_item_interactions = sparse_user_artist
+        self.item_user_interactions = sparse_artist_user
         self.user_vecs = user_vecs
         self.artist_vecs = artist_vecs
         self.data = updated_df
