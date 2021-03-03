@@ -1,5 +1,6 @@
 data
 data/*
+metrics
 
 **/.cache-*
 **.ipynb_checkpoints

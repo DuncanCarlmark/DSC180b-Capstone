@@ -18,9 +18,9 @@ from collections import defaultdict
 
 # Custom Library Imports
 from src.build_lib.billboard_build import billboard
-#from src.build_lib.task2_utils import *
 from src.models.task2 import userParent
-#from src.models.model_task2 import *
+from src.models.task2_utils import *
+from src.analysis.analysis_task2 import *
 from src.build_lib.cleaning_utils import *
 
 
@@ -231,11 +231,19 @@ def main(targets):
         print('Creating list of recommended songs')
         recommended_songs = user_parent_recommender.predict(N)
         
+        # Running Analysis-Get AUC Score
+        auc_df = run_auc(user_parent_recommender.item_user_interactions, user_parent_recommender.user_vecs, user_parent_recommender.artist_vecs)
+        
+        if not os.path.exists('metrics/'):
+            os.makedirs('metrics/')
+        auc_df.to_csv(os.path.join('metrics', 'metrics_task2.csv'))
+        
         # Saving recommendations to CSV
         print('Saving list of recommended songs')
         recommended_songs.to_csv(os.path.join(DATA_DIR_RECOMMENDATIONS, 'song_recs_t2.csv'))
         
         print(len(recommended_songs))
+        
         
 
 if __name__ == '__main__':

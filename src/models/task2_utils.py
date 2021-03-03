@@ -153,7 +153,7 @@ def build_implicit_model(user_artist_df, alpha):
     
     user_vecs = model.user_factors
     artist_vecs = model.item_factors
-    return sparse_user_artist, user_vecs, artist_vecs
+    return sparse_user_artist, sparse_artist_user, user_vecs, artist_vecs
 
 def get_related_artists(sp, uri):
     related = sp.artist_related_artists(uri)
