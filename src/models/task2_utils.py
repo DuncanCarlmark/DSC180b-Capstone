@@ -203,11 +203,8 @@ def recommend(sp, user_id, sparse_user_artist, user_vecs, artist_vecs, user_arti
         artist_related_artists.append(artist_related)
         related_uris = []
         for artist in artist_related:
-            try:
-                related_uri = sp.search(artist, type='artist')['artists']['items'][0]['uri']
-                related_uris.append(related_uri)
-            except: 
-                pass
+            related_uri = sp.search(artist, type='artist')['artists']['items'][0]['uri']
+            related_uris.append(related_uri)
         artist_related_uris.append(related_uris)
         artist_top_tracks.append(artist_tracks)
         scores.append(recommend_vector[idx])
