@@ -13,18 +13,6 @@ from sklearn.preprocessing import MinMaxScaler
 import ipywidgets
 from ipywidgets import FloatProgress
 
-def read_datafiles(user_profile_path, user_artist_path):
-    # Read datafiles for the LastFM dataset
-     
-    # Read user-profile data (user_id, gender, age, country, registered)
-    user_profile_df = pd.read_csv(user_profile_path)
-    
-    # Read user-artist data (user_id, artist_id, artist name, number of plays)
-    user_artist_df = pd.read_csv(user_artist_path)
-    
-    # Return both datasets
-    return user_profile_df, user_artist_df
-
 def extract_users(df, age, age_range):
     
     # Build age range for users similar to parents
@@ -75,9 +63,10 @@ def parse_track_info(response):
     track_names = []
     artist_names = []
     album_names = []
-    
-    for item in response['items']:
-                
+    for item in response['items']: 
+        
+        if item is None or item['track'] is None:
+            continue
         # Gets the name of the track
         track = item['track']['name']
         # Gets the name of the album
@@ -111,7 +100,7 @@ def pull_user_playlist_info(sp, user_artist_df):
         artists.extend(artists_pulled)
     
     
-    # Artists the user has listened to-normalized
+    # Artists the user has listened-normalized frequency
     playlist_artists = pd.Series(artists)
     playlist_grouped = playlist_artists.value_counts(normalize=True)
     
@@ -164,7 +153,14 @@ def build_implicit_model(user_artist_df, alpha):
     
     user_vecs = model.user_factors
     artist_vecs = model.item_factors
-    return sparse_user_artist, user_vecs, artist_vecs
+    return sparse_user_artist, sparse_artist_user, user_vecs, artist_vecs
+
+def get_related_artists(sp, uri):
+    related = sp.artist_related_artists(uri)
+    related_lst = []
+    for artist in related['artists'][:5]:
+        related_lst.append(artist['name'])
+    return related_lst
 
 def get_top_tracks(sp, uri):
     top_tracks = sp.artist_top_tracks(uri)
@@ -187,6 +183,8 @@ def recommend(sp, user_id, sparse_user_artist, user_vecs, artist_vecs, user_arti
     artists = []
     artist_uris = []
     artist_genres = []
+    artist_related_artists = []
+    artist_related_uris = []
     artist_top_tracks = []
     scores = []
     for idx in content_idx:
@@ -197,23 +195,45 @@ def recommend(sp, user_id, sparse_user_artist, user_vecs, artist_vecs, user_arti
             continue
         artist_info = sp.artist(artist_uri)
         artist_genre = artist_info['genres']
+        artist_related = get_related_artists(sp, artist_uri)
         artist_tracks = get_top_tracks(sp, artist_uri)
         artists.append(user_artist_df.artist_name.loc[user_artist_df.artist_id == idx].iloc[0])
         artist_uris.append(artist_uri)
         artist_genres.append(artist_genre)
+        artist_related_artists.append(artist_related)
+        related_uris = []
+        for artist in artist_related:
+            related_uri = sp.search(artist, type='artist')['artists']['items'][0]['uri']
+            related_uris.append(related_uri)
+        artist_related_uris.append(related_uris)
         artist_top_tracks.append(artist_tracks)
         scores.append(recommend_vector[idx])
     
     #Outputted recommended artists along with genre info and scores
-    recommendations = pd.DataFrame({'artist_name': artists, 'artist_uri': artist_uris, 'artist_genres': artist_genres, 'artist_top_tracks': artist_top_tracks, 'score': scores})
+    recommendations = pd.DataFrame({'artist_name': artists, 'artist_uri': artist_uris, 'artist_genres': artist_genres, 'artist_top_tracks': artist_top_tracks, 'artists_related': artist_related_artists, 'artists_related_uris': artist_related_uris, 'score': scores})
     return recommendations
 
-def get_top_recommended_tracks(recommendations, genre_selection, N):
+def get_top_recommended_tracks(sp, recommendations, genre_selection, N):
     # Filter recommended artists by genre
     filtered_recommendations = recommendations[recommendations.artist_genres.apply(lambda x: bool(set(x) & set(genre_selection)))]
     top_recommended_tracks = pd.DataFrame(filtered_recommendations['artist_top_tracks'].explode())
+    
+    #Find related artists to generate more songs-add those to filtered recommended songs
+    if len(filtered_recommendations) < 10:
+        related_artists_lst = list(filtered_recommendations['artists_related_uris'].explode())
+        related_tracks_lst = []
+        for artist in related_artists_lst:
+            artist_top_tracks = get_top_tracks(sp, artist)
+            related_tracks_lst.extend(artist_top_tracks)
+    
+    recommended_lst = top_recommended_tracks['artist_top_tracks'].tolist()
+
+    if len(top_recommended_tracks) < N:
+        recommended_lst.extend(related_tracks_lst)
+     
+    top_recommended_df = pd.DataFrame(recommended_lst, columns=['song_recommendations'])
     # Get the top N tracks
-    tracks_output = top_recommended_tracks.reset_index(drop=True)[:N]
+    tracks_output = top_recommended_df.reset_index(drop=True)[:N]
     return tracks_output
     
     

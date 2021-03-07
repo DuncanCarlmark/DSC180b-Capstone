@@ -1,5 +1,6 @@
 data
 data/*
+metrics
 
 **/.cache-*
 **.ipynb_checkpoints
@@ -14,3 +15,6 @@ __pycache__/*
 
 spotify_client_info.txt
 *.tsv
+notebooks/.DS_Store
+.DS_Store
+*.csv

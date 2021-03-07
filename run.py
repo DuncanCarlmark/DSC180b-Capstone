@@ -7,19 +7,20 @@ import spotipy
 from collections import defaultdict
 
 # From Sarat
-import scipy.sparse as sparse
-import numpy as np
-import random
-import implicit
-from sklearn.preprocessing import MinMaxScaler
-import ipywidgets
-from ipywidgets import FloatProgress
+#import scipy.sparse as sparse
+#import numpy as np
+#import random
+#import implicit
+#from sklearn.preprocessing import MinMaxScaler
+#import ipywidgets
+#from ipywidgets import FloatProgress
 
 
 # Custom Library Imports
 from src.build_lib.billboard_build import billboard
-from src.build_lib.task2_utils import *
-from src.models.model_task2 import *
+from src.models.task2 import userParent
+from src.models.task2_utils import *
+from src.analysis.analysis_task2 import *
 from src.build_lib.cleaning_utils import *
 
 
@@ -180,14 +181,19 @@ def main(targets):
 
         print("LOADING FILES")
         print("Loading Last.fm")
-        user_profile_df, user_artist_df = read_datafiles(USER_PROFILE_PATH_CLEAN, USER_ARTIST_PATH_CLEAN)
+        
+        # Read user-profile data (user_id, gender, age, country, registered)
+        user_profile_df = pd.read_csv(USER_PROFILE_PATH_CLEAN)
+        # Read user-artist data (user_id, artist_id, artist name, number of plays)
+        user_artist_df = pd.read_csv(USER_ARTIST_PATH_CLEAN)
         
         age_range = 5
-        # Extracting users and user history based on parent age
-        chosen_users = extract_users(user_profile_df, PARENT_AGE, age_range)
-        chosen_history = extract_histories(user_artist_df, chosen_users)
-
-
+        N = 30
+        
+        # Initializing the Model
+        user_parent_recommender = userParent(user_profile_df, user_artist_df, PARENT_AGE, age_range, GENRES)
+        
+        # Initializing Spotipy Object
         print("CREATING SPOTIPY OBJECT")
         # Application information
         client_id = 'f78a4f4cfe9c40ea8fe346b0576e98ea'
@@ -216,32 +222,29 @@ def main(targets):
             os.remove(f'.cache-{USERNAME}')
             sp = spotipy.Spotify(auth_manager=sp_oauth)
         print("Created spotipy object")
-
-        grouped_df = prepare_dataset(chosen_history)
-
-        print("GETTING USER PLAYLISTS")
-        playlist_df, current_user = pull_user_playlist_info(sp, grouped_df)
         
-        print("COMBINING USER HISTORY WITH LAST.FM HISTORY")
-        updated_df = updated_df_with_user(grouped_df, playlist_df)
-
-        print("FITTING ALS MODEL")
-        alpha = 15
-        # Create recommendations for current user
-        user_id = current_user
-        sparse_user_artist, user_vecs, artist_vecs = build_implicit_model(updated_df, alpha)
+        # Fitting the Model
         
-        print("GENERATING RECOMMMENDATIONS LIST")
-        artist_recommendations = recommend(sp, user_id, sparse_user_artist, user_vecs, artist_vecs, updated_df)
-       
-        N = 50
+        user_parent_recommender.fit(sp)
         
-        print("SELECTING TOP " +str(N)+ " RECOMMENDATIONS")
-        recommended_tracks = get_top_recommended_tracks(artist_recommendations, GENRES, N)
+        # Recommending Songs
+        print('Creating list of recommended songs')
+        recommended_songs = user_parent_recommender.predict(N)
         
-           
+        # Running Analysis-Get AUC Score
+        auc_df = run_auc(user_parent_recommender.item_user_interactions, user_parent_recommender.user_vecs, user_parent_recommender.artist_vecs)
+        
+        if not os.path.exists('metrics/'):
+            os.makedirs('metrics/')
+        auc_df.to_csv(os.path.join('metrics', 'metrics_task2.csv'))
+        
+        # Saving recommendations to CSV
         print('Saving list of recommended songs')
-        recommended_tracks.to_csv(os.path.join(DATA_DIR_RECOMMENDATIONS, 'song_recs_t2.csv'))
+        recommended_songs.to_csv(os.path.join(DATA_DIR_RECOMMENDATIONS, 'song_recs_t2.csv'))
+        
+        print(len(recommended_songs))
+        
+        
 
 if __name__ == '__main__':
     targets = sys.argv[1:]
