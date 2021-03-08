@@ -124,7 +124,7 @@ def main(targets):
 
     # WILL BE IMPLEMENTED IN FUTURE
     # SIMPLE CLEANING OCCURS IN TASK1 AND TASK 2
-    if 'all' in targets or 'clean-data' in targets:
+    if 'all' in targets or 'clean-data' in targets or 'test' in targets:
 
         print("---------------------------------------- CLEANING TRAINING DATA ----------------------------------------")
 
