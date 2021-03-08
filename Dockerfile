@@ -19,5 +19,5 @@ USER root
 RUN	apt-get install htop
 
 # 3) install packages
-RUN pip install --no-cache-dir sklearn spotipy implicit
+RUN pip install --no-cache-dir sklearn spotipy implicit lightfm
 
