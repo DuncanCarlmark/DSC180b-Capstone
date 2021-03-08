@@ -158,7 +158,7 @@ def build_implicit_model(user_artist_df, alpha):
 def get_related_artists(sp, uri):
     related = sp.artist_related_artists(uri)
     related_lst = []
-    for artist in related['artists'][:5]:
+    for artist in related['artists'][:6]:
         related_lst.append(artist['name'])
     return related_lst
 
@@ -203,8 +203,12 @@ def recommend(sp, user_id, sparse_user_artist, user_vecs, artist_vecs, user_arti
         artist_related_artists.append(artist_related)
         related_uris = []
         for artist in artist_related:
-            related_uri = sp.search(artist, type='artist')['artists']['items'][0]['uri']
-            related_uris.append(related_uri)
+            try:
+                request = sp.search(artist, type='artist')
+                related_uri = request['artists']['items'][0]['uri']
+                related_uris.append(related_uri)
+            except:
+                continue
         artist_related_uris.append(related_uris)
         artist_top_tracks.append(artist_tracks)
         scores.append(recommend_vector[idx])
@@ -220,6 +224,7 @@ def get_top_recommended_tracks(sp, recommendations, genre_selection, N):
     
     #Find related artists to generate more songs-add those to filtered recommended songs
     if len(filtered_recommendations) < 10:
+        related_artist_names = list(filtered_recommendations['artists_related'].explode())
         related_artists_lst = list(filtered_recommendations['artists_related_uris'].explode())
         related_tracks_lst = []
         for artist in related_artists_lst:
