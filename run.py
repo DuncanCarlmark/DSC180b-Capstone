@@ -159,13 +159,21 @@ def main(targets):
 
         print("---------------------------------------- GENERATING T0 RECOMMENDATIONS BASED ON CONFIG ----------------------------------------")
 
+        print("LOADING FILES")
+        print("Loading Billboard")
         billboard_songs = pd.read_csv(BILLBOARD_SONGS_PATH_CLEAN)
         billboard_features = pd.read_csv(BILLBOARD_FEATURES_PATH_CLEAN)
+        
+        print("Initializing model parameters")
+        # Establish parameters for parent-user model
+        
+        age_range = 2
+        N = 30
 
         # Create billboard client
         print('Creating list of recommended songs')
         billboard_recommender = billboard(billboard_songs, billboard_features)
-        song_recommendations = billboard_recommender.getList(PARENT_AGE, GENRES, ARTIST)
+        song_recommendations = billboard_recommender.getList(N, PARENT_AGE, GENRES, ARTIST)
 
         print('Saving list of recommended songs')
         # Save to csv
