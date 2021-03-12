@@ -10,9 +10,7 @@ class billboard:
 
         self.billboard_songs = billboard_songs
         self.billboard_features = billboard_features
-
         
-
     def weeklyAvg(self):
         # average weekly position
         avg_pos = self.billboard_songs[['WeekID', 'Week Position', 'SongID']].groupby(by=['SongID']).mean()
@@ -26,7 +24,20 @@ class billboard:
         stats = avg_pos.join(minweek).join(maxweek).join(max_occ)
         self.data = self.billboard_features.join(stats, on='SongID').rename(columns={'Week Position':'Avg Weekly'})
 
-    def getList(self, how='avg', length=30, genre=[], startY=2019, endY=2019):
+    def getList(self, length=30, age=None, genre=[], artist=[]):
+        
+        # As a default just use songs from the current year
+        startY = 2019
+        endY = datetime.datetime.today().year
+
+        AGE_LOWER_BOUND = 15
+        AGE_UPPER_BOUND = 30
+        if age:
+            # Determining time range for song recommendations
+            current_year = datetime.datetime.today().year
+            startY = current_year - abs(age - AGE_LOWER_BOUND)
+            endY = current_year - abs(age - AGE_UPPER_BOUND)
+        
         # songs should have left chart after lower bound (e.g. 2019 songs should still be on chart after 2019/1/1)
         lowerBound = datetime.datetime(startY, 1, 1)
         # songs should have entered chart before upper bound (e.g. 2019 songs should have been on chart before 2019/12/31)
@@ -36,12 +47,15 @@ class billboard:
 
         data = self.data
         filter_t = data[(data['firstWeekID'] < upperBound) & (data['lastWeekID'] > lowerBound)]
-        if (len(genre) == 0):
-            filter_g = filter_t[filter_t.spotify_genre.apply(lambda x: bool(set(x) & set(genre)))]
-        else:
-            filter_g = filter_t
         
-        playlist = filter_g.sort_values(['Instance','Avg Weekly','Weeks on Chart'], 
-                                        ascending=[True,True,False]).reset_index(drop=True)
-        #return playlist[playlist.columns[0:5]][:length] # for test
+        filter_g = filter_t[filter_t.spotify_genre.apply(lambda x: bool(set(x) & set(genre)))]
+        filter_a = filter_t[filter_t.Performer.apply(lambda x: bool(set(x) & set(artist)))]
+        
+        playlist = filter_g.append(filter_a)
+        
+        if len(playlist) < length:
+            playlist = filter_t
+        
+        playlist.sort_values(['Instance','Avg Weekly','Weeks on Chart'], ascending=[True,True,False], inplace=True, ignore_index=True)
+        
         return playlist['spotify_track_id'][:length].to_list()

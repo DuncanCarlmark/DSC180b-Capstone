@@ -17,7 +17,8 @@ from collections import defaultdict
 
 
 # Custom Library Imports
-from src.build_lib.billboard_build import billboard
+from src.models.task0 import billboard
+from src.models.task1 import parentUser
 from src.models.task2 import userParent
 from src.models.task2_utils import *
 from src.analysis.analysis_task2 import *
@@ -51,13 +52,12 @@ BILLBOARD_FEATURES_PATH_CLEAN = os.path.join(DATA_DIR_CLEAN, 'billboard_features
 
 
 
-
 def main(targets):
 
     USERNAME = None
     PARENT_AGE = None
     GENRES = None
-
+    ARTIST = None
 
     if 'test' in targets:
         # Parse Config File
@@ -66,6 +66,7 @@ def main(targets):
             USERNAME = run_cfg['username']
             PARENT_AGE = run_cfg['parent_age']
             GENRES = run_cfg['genres']
+            ARTIST = run_cfg['artists']
             CACHE_PATH = os.path.join('test', '.cache-' + USERNAME)
     else:
         # Parse Config File
@@ -74,6 +75,7 @@ def main(targets):
             USERNAME = run_cfg['username']
             PARENT_AGE = run_cfg['parent_age']
             GENRES = run_cfg['genres']
+            ARTIST = run_cfg['artists']
 
 
 # ------------------------------------------------------ LOAD DATA ------------------------------------------------------
@@ -150,12 +152,12 @@ def main(targets):
         print('Saving cleaned data to data/clean')
 
 
-# ------------------------------------------------------ TASK 1 RECOMMENDATION ------------------------------------------------------
+# ------------------------------------------------------ TASK 0 RECOMMENDATION ------------------------------------------------------
 
 
-    if 'all' in targets or 'task1' in targets  or 'test' in targets:
+    if 'all' in targets or 'task0' in targets  or 'test' in targets:
 
-        print("---------------------------------------- GENERATING T1 RECOMMENDATIONS BASED ON CONFIG ----------------------------------------")
+        print("---------------------------------------- GENERATING T0 RECOMMENDATIONS BASED ON CONFIG ----------------------------------------")
 
         billboard_songs = pd.read_csv(BILLBOARD_SONGS_PATH_CLEAN)
         billboard_features = pd.read_csv(BILLBOARD_FEATURES_PATH_CLEAN)
@@ -163,8 +165,98 @@ def main(targets):
         # Create billboard client
         print('Creating list of recommended songs')
         billboard_recommender = billboard(billboard_songs, billboard_features)
-        song_recommendations = billboard_recommender.getList(startY=2010, endY=2020, genre=[GENRES])
+        song_recommendations = billboard_recommender.getList(PARENT_AGE, GENRES, ARTIST)
 
+        print('Saving list of recommended songs')
+        # Save to csv
+        print(len(song_recommendations))
+
+        pd.DataFrame({'song_recommendations': song_recommendations}).to_csv(os.path.join(DATA_DIR_RECOMMENDATIONS, 'song_recs_t0.csv'))
+        
+        
+# ------------------------------------------------------ TASK 1 RECOMMENDATION ------------------------------------------------------
+
+
+    if 'all' in targets or 'task1' in targets  or 'test' in targets:
+
+        print("---------------------------------------- GENERATING T1 RECOMMENDATIONS BASED ON CONFIG ----------------------------------------")
+
+        print("LOADING FILES")
+        print("Loading Last.fm")
+        
+        # Read user-profile data (user_id, gender, age, country, registered)
+        user_profile_df = pd.read_csv(USER_PROFILE_PATH_CLEAN)[['user_id', 'age']]
+        # Read user-artist data (user_id, artist_id, artist name, number of plays)
+        user_artist_df = pd.read_csv(USER_ARTIST_PATH_CLEAN)
+
+        print("Initializing model parameters")
+        # Establish parameters for parent-user model
+        
+        age_range = 2
+        N = 30
+        
+        # Initializing Spotipy Object
+        print("CREATING SPOTIPY OBJECT")
+        # Application information
+        client_id = 'f78a4f4cfe9c40ea8fe346b0576e98ea'
+        client_secret = 'c26db2d4c1fb42d79dc99945b2360ab4'
+
+        # Temporary placeholder until we actually get a website going
+        redirect_uri = 'https://google.com/'
+
+        # The permissions that our application will ask for
+        scope = " ".join(['playlist-modify-public',"user-top-read","user-read-recently-played","playlist-read-private"])
+
+        
+        sp_oauth = None
+        # Oauth object    
+        if 'test' in targets:
+            sp_oauth = spotipy.oauth2.SpotifyOAuth(client_id, client_secret, redirect_uri, 
+                                                    scope=scope, cache_path = CACHE_PATH, username=USERNAME)
+        else:
+            sp_oauth = spotipy.oauth2.SpotifyOAuth(client_id, client_secret, redirect_uri, 
+                                                    scope=scope, username=USERNAME)
+        print("Created Oauth object")
+
+        try:
+            sp = spotipy.Spotify(auth_manager=sp_oauth)
+        except:
+            os.remove(f'.cache-{USERNAME}')
+            sp = spotipy.Spotify(auth_manager=sp_oauth)
+        print("Created spotipy object")
+        
+        
+        print("Loading your Spotify top tracks")
+        top_tracks = sp.current_user_top_tracks(limit=50, time_range='medium_term')['items']
+        
+        print("Initializing model object")
+        # Initializing the Model
+        parent_user_recommender = parentUser(
+            'new_user',
+            top_tracks,
+            user_profile_df, 
+            user_artist_df,
+            PARENT_AGE,
+            age_range,
+        )
+        print("Fitting data")
+        parent_user_recommender.fit_data()
+        print("Fitting model")
+        parent_user_recommender.fit_model()
+
+        print("Getting preferred artists...")
+        top_artists = parent_user_recommender.predict_artists()
+
+        top_artists_id = []
+        for artist_name in top_artists:
+            try:
+                top_artists_id.append(sp.search(artist_name, type='artist')['artists']['items'][0]['id'])
+            except IndexError:
+                pass  # do nothing!
+
+        print("Getting preferred songs...")
+        song_recommendations = parent_user_recommender.predict_songs(top_artists_id, N, sp)
+        
         print('Saving list of recommended songs')
         # Save to csv
         print(len(song_recommendations))
@@ -242,8 +334,7 @@ def main(targets):
         print('Saving list of recommended songs')
         recommended_songs.to_csv(os.path.join(DATA_DIR_RECOMMENDATIONS, 'song_recs_t2.csv'))
         
-        print(len(recommended_songs))
-        
+        print(len(recommended_songs))       
         
 
 if __name__ == '__main__':
